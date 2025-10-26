@@ -1,8 +1,10 @@
 import { Key } from './Key';
 import type { KeyConfig } from '../../types/index';
 import { useMessageStore } from '../../store/messageStore';
+import { useTextToSpeech } from '../../hooks/useTextToSpeech';
+import { useMemo } from 'react';
 
-const KEYBOARD_LAYOUT: KeyConfig[] = [
+const BASE_KEYBOARD_LAYOUT: KeyConfig[] = [
   // Row 1
   { id: 'q', label: 'Q', value: 'q', type: 'letter', gridArea: '1 / 1 / 2 / 2' },
   { id: 'w', label: 'W', value: 'w', type: 'letter', gridArea: '1 / 2 / 2 / 3' },
@@ -42,7 +44,24 @@ const KEYBOARD_LAYOUT: KeyConfig[] = [
 ];
 
 export const Keyboard = () => {
-  const { addCharacter, deleteCharacter, addSpace } = useMessageStore();
+  const { message, addCharacter, deleteCharacter, addSpace } = useMessageStore();
+  const { speak, isSpeaking, isLoading } = useTextToSpeech();
+
+  // Dynamic keyboard layout with updated speak button label
+  const keyboardLayout = useMemo(() => {
+    return BASE_KEYBOARD_LAYOUT.map((key) => {
+      if (key.id === 'speak') {
+        let label = '🔊 Speak';
+        if (isLoading) {
+          label = '⏳ Loading...';
+        } else if (isSpeaking) {
+          label = '🔊 Speaking...';
+        }
+        return { ...key, label };
+      }
+      return key;
+    });
+  }, [isSpeaking, isLoading]);
 
   const handleKeySelect = (value: string) => {
     if (value === 'delete') {
@@ -50,8 +69,10 @@ export const Keyboard = () => {
     } else if (value === ' ') {
       addSpace();
     } else if (value === 'speak') {
-      // Handle speak - will implement with TTS
-      console.log('Speak button clicked');
+      // Speak the current message
+      if (message && message.trim()) {
+        speak(message);
+      }
     } else {
       addCharacter(value);
     }
@@ -66,7 +87,7 @@ export const Keyboard = () => {
           gridTemplateRows: 'repeat(4, 1fr)',
         }}
       >
-        {KEYBOARD_LAYOUT.map((key) => (
+        {keyboardLayout.map((key) => (
           <Key key={key.id} config={key} onSelect={handleKeySelect} />
         ))}
       </div>

@@ -13,9 +13,9 @@ HelloFriend Web is an assistive communication application designed for people wi
 - **Frontend**: React 18 + TypeScript + Vite
 - **Styling**: Tailwind CSS
 - **State Management**: Zustand (with persist middleware for settings)
+- **TTS**: ElevenLabs API (primary), Web Speech API (fallback) ✅
 - **Backend**: Supabase (auth, database) - Phase 2
 - **AI**: Claude API (Anthropic) for word predictions - Phase 2
-- **TTS**: ElevenLabs API (primary), Web Speech API (fallback) - Phase 2
 - **Deploy**: Vercel
 
 ## Development Commands
@@ -128,16 +128,47 @@ Implemented in `Key.tsx`:
 
 This creates a circular progress indicator that fills clockwise as the user dwells.
 
+## Text-to-Speech Integration ✅
+
+**Implemented in Phase 2**
+
+Located at `src/hooks/useTextToSpeech.ts` and `src/services/elevenLabsApi.ts`
+
+**How it works**:
+1. Primary TTS: ElevenLabs API for high-quality natural voices
+2. Automatic Fallback: Web Speech API if ElevenLabs is not configured or fails
+3. Triggered by dwelling on the "Speak" button
+4. Visual feedback: Button label changes to "⏳ Loading..." then "🔊 Speaking..."
+
+**States**:
+- `isSpeaking`: Boolean indicating if TTS is currently playing
+- `isLoading`: Boolean indicating if TTS audio is being generated
+- `error`: String with error message if TTS fails
+
+**Functions**:
+- `speak(text: string)`: Speaks the provided text using ElevenLabs (primary) or Web Speech API (fallback)
+- `stop()`: Stops any currently playing speech
+
+**Configuration**:
+- ElevenLabs API key: Set `VITE_ELEVENLABS_API_KEY` in `.env` file
+- Voice ID: Stored in `settingsStore.voiceId` (default: '21m00Tcm4TlvDq8ikWAM')
+- Without API key: Automatically falls back to browser's Web Speech API
+
+**Usage in Keyboard.tsx**:
+```typescript
+const { speak, isSpeaking, isLoading } = useTextToSpeech();
+
+// When speak button is selected
+if (message && message.trim()) {
+  speak(message);
+}
+```
+
 ## Phase 2 Features (Not Yet Implemented)
 
 The following features are planned but not yet implemented:
 
-1. **Text-to-Speech Integration** (`src/hooks/useTextToSpeech.ts`)
-   - Primary: ElevenLabs API for natural voices
-   - Fallback: Web Speech API
-   - Triggered by "Speak" button
-
-2. **AI Word Prediction** (`src/hooks/useTextPrediction.ts`)
+1. **AI Word Prediction** (`src/hooks/useTextPrediction.ts`)
    - Uses Claude API to predict next words based on current context
    - Displays predictions in a bar above keyboard
    - Users can select predictions by dwelling
@@ -172,13 +203,25 @@ Dwell time is stored in `settingsStore` and defaults to 600ms. To change:
 - User-adjustable: Add settings UI that calls `setDwellTime(newTime)`
 - Developer default: Change `dwellTime: 600` in `src/store/settingsStore.ts`
 
-### Implementing TTS
+### Modifying TTS Configuration
 
-1. Create `src/hooks/useTextToSpeech.ts`
-2. Implement ElevenLabs API call with environment variable from `.env`
-3. Add fallback to Web Speech API: `window.speechSynthesis.speak()`
-4. Connect to "Speak" button handler in `Keyboard.tsx`
-5. Pass current message from `messageStore` to TTS function
+TTS is already implemented. To modify:
+
+**Change Voice**:
+1. Get voice ID from ElevenLabs dashboard
+2. Update `settingsStore.voiceId` (default: '21m00Tcm4TlvDq8ikWAM')
+3. Or add settings UI to let users select voices
+
+**Troubleshooting TTS**:
+- If ElevenLabs doesn't work: Check API key in `.env` file
+- Error "ElevenLabs API key not configured": Add valid key to `.env`
+- Falls back to Web Speech API: This is normal if no API key is set
+- Web Speech API voice: Browser-dependent, cannot be customized without ElevenLabs
+
+**Testing Fallback**:
+1. Remove or invalidate `VITE_ELEVENLABS_API_KEY` in `.env`
+2. Restart dev server
+3. Speak button will use Web Speech API automatically
 
 ### Implementing AI Predictions
 
