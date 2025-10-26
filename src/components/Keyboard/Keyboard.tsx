@@ -1,4 +1,3 @@
-import React from 'react';
 import { Key } from './Key';
 import type { KeyConfig } from '../../types/index';
 import { useMessageStore } from '../../store/messageStore';
@@ -42,7 +41,7 @@ const KEYBOARD_LAYOUT: KeyConfig[] = [
   { id: 'speak', label: '🔊 Speak', value: 'speak', type: 'speak', gridArea: '4 / 8 / 5 / 11' },
 ];
 
-export const Keyboard: React.FC = () => {
+export const Keyboard = () => {
   const { addCharacter, deleteCharacter, addSpace } = useMessageStore();
 
   const handleKeySelect = (value: string) => {

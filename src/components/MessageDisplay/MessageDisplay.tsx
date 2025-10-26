@@ -1,7 +1,6 @@
-import React from 'react';
 import { useMessageStore } from '../../store/messageStore';
 
-export const MessageDisplay: React.FC = () => {
+export const MessageDisplay = () => {
   const message = useMessageStore((state) => state.message);
 
   return (

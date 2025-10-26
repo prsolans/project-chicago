@@ -1,4 +1,3 @@
-import React from 'react';
 import { useDwellDetection } from '../../hooks/useDwellDetection';
 import { useSettingsStore } from '../../store/settingsStore';
 import type { KeyConfig } from '../../types/index';
@@ -8,7 +7,7 @@ interface KeyProps {
   onSelect: (value: string) => void;
 }
 
-export const Key: React.FC<KeyProps> = ({ config, onSelect }) => {
+export const Key = ({ config, onSelect }: KeyProps) => {
   const dwellTime = useSettingsStore((state) => state.dwellTime);
   const enableSound = useSettingsStore((state) => state.enableSound);
 

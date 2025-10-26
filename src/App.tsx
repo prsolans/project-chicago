@@ -1,4 +1,3 @@
-import React from 'react';
 import { MessageDisplay } from './components/MessageDisplay/MessageDisplay';
 import { Keyboard } from './components/Keyboard/Keyboard';
 
