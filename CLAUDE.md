@@ -151,7 +151,9 @@ Located at `src/hooks/useTextToSpeech.ts` and `src/services/elevenLabsApi.ts`
 
 **Configuration**:
 - ElevenLabs API key: Set `VITE_ELEVENLABS_API_KEY` in `.env` file
-- Voice ID: Stored in `settingsStore.voiceId` (default: '21m00Tcm4TlvDq8ikWAM')
+- Voice ID: Set `VITE_ELEVENLABS_VOICE_ID` in `.env` file (default: '21m00Tcm4TlvDq8ikWAM' - Rachel voice)
+  - Browse voices at: https://elevenlabs.io/voice-library
+  - Voice ID is persisted in `settingsStore.voiceId` and can be changed via settings UI
 - Without API key: Automatically falls back to browser's Web Speech API
 
 **Usage in Keyboard.tsx**:
@@ -208,15 +210,23 @@ Dwell time is stored in `settingsStore` and defaults to 600ms. To change:
 TTS is already implemented. To modify:
 
 **Change Voice**:
-1. Get voice ID from ElevenLabs dashboard
-2. Update `settingsStore.voiceId` (default: '21m00Tcm4TlvDq8ikWAM')
-3. Or add settings UI to let users select voices
+1. Browse voices at https://elevenlabs.io/voice-library
+2. Copy the voice ID you want to use
+3. Update `VITE_ELEVENLABS_VOICE_ID` in `.env` file
+4. Restart dev server to apply changes
+5. Alternatively, add settings UI to let users select voices dynamically via `setVoiceId()`
+
+**Default Voice IDs**:
+- `21m00Tcm4TlvDq8ikWAM` - Rachel (default female voice)
+- `pNInz6obpgDQGcFmaJgB` - Adam (male voice)
+- Browse full library: https://elevenlabs.io/voice-library
 
 **Troubleshooting TTS**:
 - If ElevenLabs doesn't work: Check API key in `.env` file
 - Error "ElevenLabs API key not configured": Add valid key to `.env`
 - Falls back to Web Speech API: This is normal if no API key is set
 - Web Speech API voice: Browser-dependent, cannot be customized without ElevenLabs
+- Wrong voice being used: Check `VITE_ELEVENLABS_VOICE_ID` in `.env` and restart server
 
 **Testing Fallback**:
 1. Remove or invalidate `VITE_ELEVENLABS_API_KEY` in `.env`
@@ -299,10 +309,11 @@ src/
 ## Environment Variables
 
 Copy `.env.example` to `.env` and fill in:
+- `VITE_ELEVENLABS_API_KEY`: ElevenLabs API key for TTS ✅
+- `VITE_ELEVENLABS_VOICE_ID`: Voice ID from ElevenLabs voice library (default: Rachel) ✅
+- `VITE_ANTHROPIC_API_KEY`: Anthropic API key for Claude (Phase 2)
 - `VITE_SUPABASE_URL`: Supabase project URL (Phase 2)
 - `VITE_SUPABASE_ANON_KEY`: Supabase anonymous key (Phase 2)
-- `VITE_ANTHROPIC_API_KEY`: Anthropic API key for Claude (Phase 2)
-- `VITE_ELEVENLABS_API_KEY`: ElevenLabs API key for TTS (Phase 2)
 
 ## Accessibility Considerations
 

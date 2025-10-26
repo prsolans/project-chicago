@@ -9,11 +9,14 @@ interface SettingsStore extends UserSettings {
   setEnableSound: (enabled: boolean) => void;
 }
 
+// Get default voice ID from environment variable or use Rachel voice as fallback
+const DEFAULT_VOICE_ID = import.meta.env.VITE_ELEVENLABS_VOICE_ID || '21m00Tcm4TlvDq8ikWAM';
+
 export const useSettingsStore = create<SettingsStore>()(
   persist(
     (set) => ({
       dwellTime: 600,
-      voiceId: '21m00Tcm4TlvDq8ikWAM', // Default ElevenLabs voice
+      voiceId: DEFAULT_VOICE_ID,
       enableAI: true,
       enableSound: true,
 
