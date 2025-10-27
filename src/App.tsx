@@ -70,7 +70,7 @@ function App() {
   const phrasesButton = useDwellDetection(dwellTime, () => setShowCategories(!showCategories));
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col">
+    <div className="h-screen bg-slate-900 flex flex-col overflow-hidden">
       {/* Header */}
       <header className="flex items-center justify-between px-8 py-6 border-b border-slate-700/50 bg-slate-900/95">
         <div>
