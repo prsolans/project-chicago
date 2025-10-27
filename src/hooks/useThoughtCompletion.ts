@@ -167,8 +167,8 @@ export function useThoughtCompletion({
   const triggerPredictions = useCallback((input: string) => {
     if (!enabled) return;
 
-    // Don't trigger if input is too short
-    if (input.trim().length < minCharacters) {
+    // Don't trigger if input is too short (but allow empty for first word predictions)
+    if (input.length > 0 && input.trim().length < minCharacters) {
       setPredictions([]);
       return;
     }

@@ -9,6 +9,8 @@ import type {
   SpeakerRole,
   TimeOfDay,
 } from '../types/conversation';
+import { addToConversationHistory, trackTypedMessage, suggestCategory } from '../services/usageTracker';
+import type { InputMethod } from '../types/database';
 
 interface ConversationState {
   // Current session
@@ -154,6 +156,11 @@ export const useConversationStore = create<ConversationState>()(
             timeOfDay: getTimeOfDay(),
           },
         }));
+
+        // Sync to Supabase (async, non-blocking)
+        syncMessageToCloud(content, method).catch(err => {
+          console.error('Failed to sync message to cloud:', err);
+        });
       },
 
       editMessage: (messageId: string, newContent: string) => {
@@ -289,4 +296,39 @@ function getColorForRole(role: SpeakerRole): string {
     other: '#6b7280', // gray
   };
   return colorMap[role];
+}
+
+// Map MessageMethod to InputMethod for database
+function mapToInputMethod(method: MessageMethod): InputMethod {
+  const methodMap: Record<MessageMethod, InputMethod> = {
+    typed: 'typed',
+    predicted: 'predicted',
+    category: 'category',
+    quick_phrase: 'quick_phrase',
+    thought_stream: 'thought_stream',
+  };
+  return methodMap[method] || 'typed';
+}
+
+// Sync message to Supabase (async, non-blocking)
+async function syncMessageToCloud(content: string, method: MessageMethod): Promise<void> {
+  const inputMethod = mapToInputMethod(method);
+
+  // Add to conversation history
+  await addToConversationHistory({
+    content,
+    input_method: inputMethod,
+    phrase_id: null, // Will be set later if we track phrase relationships
+  });
+
+  // If typed, check if it should become a candidate phrase
+  if (method === 'typed') {
+    const category = suggestCategory(content);
+    const result = await trackTypedMessage(content, category || undefined);
+
+    if (result.isCandidate) {
+      console.log('New phrase candidate detected:', content);
+      // In future, trigger UI notification here
+    }
+  }
 }

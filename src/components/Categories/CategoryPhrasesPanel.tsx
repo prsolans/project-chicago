@@ -52,6 +52,7 @@ export const CategoryPhrasesPanel = ({
     activeCategory,
     setActiveCategory,
     refreshPredictions,
+    trackPhraseSelection,
   } = useCategoryPhrases({
     enabled: true,
   });
@@ -187,7 +188,10 @@ export const CategoryPhrasesPanel = ({
               <PhraseButton
                 key={prediction.id}
                 prediction={prediction}
-                onSelect={() => onSelectPhrase(prediction.content)}
+                onSelect={() => {
+                  onSelectPhrase(prediction.content);
+                  trackPhraseSelection(prediction.id);
+                }}
                 isLarge={isFullScreen}
               />
             ))}

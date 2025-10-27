@@ -3,7 +3,8 @@ import { generateCategoryPredictions } from '../services/claudeApi';
 import { useConversation } from './useConversation';
 import type { AIPrediction, PredictionContext } from '../types/conversation';
 import type { PhraseCategory } from '../data/staticPhrases';
-import { getStaticPhrases } from '../data/staticPhrases';
+import { usePhraseLibrary } from '../store/phraseLibraryStore';
+import type { Phrase } from '../types/database';
 import {
   getAllCachedPhrases,
   setAllCachedPhrases,
@@ -23,6 +24,7 @@ interface UseCategoryPhrasesResult {
   activeCategory: string | null;
   setActiveCategory: (category: string | null) => void;
   cacheStats: ReturnType<typeof getCacheStats>;
+  trackPhraseSelection: (phraseId: string) => Promise<void>;
 }
 
 const DEFAULT_CATEGORIES: PhraseCategory[] = [
@@ -32,7 +34,31 @@ const DEFAULT_CATEGORIES: PhraseCategory[] = [
   'social',       // "Thank you", "I love you"
   'responses',    // "Yes", "No", "Maybe"
   'questions',    // "What time is it?", "Who's here?"
+  'food',         // "I'm hungry", "Can I have water?"
+  'feelings',     // "I'm happy", "I'm tired"
+  'entertainment', // "Can you turn on the TV?", "Play some music"
 ];
+
+/**
+ * Convert database Phrase to AIPrediction format
+ */
+function phraseToAIPrediction(phrase: Phrase): AIPrediction {
+  // Map PhraseSource to AIPrediction source
+  const sourceMap: Record<string, 'ai' | 'cache' | 'pattern' | 'static'> = {
+    static: 'static',
+    ai_generated: 'ai',
+    user_typed: 'pattern',
+    user_custom: 'pattern',
+  };
+
+  return {
+    id: phrase.id,
+    content: phrase.text,
+    confidence: phrase.confidence,
+    category: phrase.category,
+    source: sourceMap[phrase.source] || 'static',
+  };
+}
 
 export function useCategoryPhrases({
   categories = DEFAULT_CATEGORIES,
@@ -45,6 +71,7 @@ export function useCategoryPhrases({
   const [cacheStats, setCacheStats] = useState(getCacheStats());
 
   const { messages, currentContext, getCurrentTimeOfDay } = useConversation();
+  const { getPhrasesByCategory, trackUsage } = usePhraseLibrary();
 
   /**
    * Build prediction context for category phrases
@@ -63,44 +90,45 @@ export function useCategoryPhrases({
   }, [messages, currentContext, getCurrentTimeOfDay]);
 
   /**
-   * Load phrases with cache-first strategy:
-   * 1. Check cache first (instant)
-   * 2. Return static phrases as fallback (instant)
-   * 3. Background AI call to refresh cache (async, NEVER shows loading)
+   * Load phrases with cloud-first strategy:
+   * 1. Load from database (instant with offline cache)
+   * 2. Check AI cache and merge (instant)
+   * 3. Background AI call to supplement (async, NEVER shows loading)
    */
   const loadPhrases = useCallback(async () => {
     if (!enabled) return;
 
     const recentMessageTexts = messages.slice(-5).map(msg => msg.content);
 
-    // Step 1: Always load static phrases as base
-    const staticPhrases: Record<string, AIPrediction[]> = {};
+    // Step 1: Load phrases from database (cloud-synced with offline cache)
+    const dbPhrases: Record<string, AIPrediction[]> = {};
     for (const category of categories) {
-      staticPhrases[category] = getStaticPhrases(category);
+      const phrases = await getPhrasesByCategory(category, true); // true = smart sort
+      dbPhrases[category] = phrases.map(phraseToAIPrediction);
     }
 
-    // Step 2: Check cache and merge with static
-    const cachedPhrases = getAllCachedPhrases(categories, recentMessageTexts);
+    // Step 2: Check AI cache and merge with database phrases
+    const cachedAIPhrases = getAllCachedPhrases(categories, recentMessageTexts);
 
-    // Merge static with cached AI phrases for each category
+    // Merge database phrases with cached AI phrases for each category
     const mergedPhrases: Record<string, AIPrediction[]> = {};
     for (const category of categories) {
-      const staticList = staticPhrases[category] || [];
-      const cachedList = cachedPhrases[category] || [];
+      const dbList = dbPhrases[category] || [];
+      const aiList = cachedAIPhrases[category] || [];
 
-      // Combine: show AI phrases first (contextual), then static phrases
+      // Combine: show AI phrases first (contextual), then database phrases
       // Limit to first 20 total to keep UI manageable
-      mergedPhrases[category] = [...cachedList, ...staticList].slice(0, 20);
+      mergedPhrases[category] = [...aiList, ...dbList].slice(0, 20);
     }
 
     // ALWAYS set phrases immediately - never show loading state
     setCategoryPredictions(mergedPhrases);
     setCacheStats(getCacheStats());
-    console.log(`📚 Loaded ${Object.keys(cachedPhrases).length} cached categories merged with static phrases`);
+    console.log(`📚 Loaded ${categories.length} categories from database merged with AI cache`);
 
     // Step 3: Silent background AI call to refresh cache (only for missing categories)
     // This happens silently without showing loading state
-    const categoriesToRefresh = categories.filter(cat => !cachedPhrases[cat]);
+    const categoriesToRefresh = categories.filter(cat => !cachedAIPhrases[cat] || cachedAIPhrases[cat].length === 0);
 
     if (categoriesToRefresh.length > 0) {
       // Don't set loading state - refresh happens silently
@@ -117,23 +145,23 @@ export function useCategoryPhrases({
         setCategoryPredictions(prev => {
           const updated = { ...prev };
           for (const category of categoriesToRefresh) {
-            const staticList = staticPhrases[category] || [];
+            const dbList = dbPhrases[category] || [];
             const aiList = aiPhrases[category] || [];
-            // Merge AI (contextual) + static, limit to 20
-            updated[category] = [...aiList, ...staticList].slice(0, 20);
+            // Merge AI (contextual) + database, limit to 20
+            updated[category] = [...aiList, ...dbList].slice(0, 20);
           }
           return updated;
         });
         setCacheStats(getCacheStats());
 
-        console.log(`✅ AI-refreshed ${categoriesToRefresh.length} categories silently in background`);
+        console.log(`✅ AI-supplemented ${categoriesToRefresh.length} categories silently in background`);
       } catch (err) {
         console.error('Error fetching AI predictions:', err);
-        setError('Failed to refresh some phrases (using cached/static)');
-        // Keep static/cached phrases even on error
+        setError('Failed to refresh some AI phrases (using database)');
+        // Keep database phrases even on error
       }
     }
-  }, [enabled, buildContext, categories]);
+  }, [enabled, buildContext, categories, messages, getPhrasesByCategory]);
 
   /**
    * Refresh all predictions manually (forces AI refresh and updates cache)
@@ -152,30 +180,31 @@ export function useCategoryPhrases({
       // Update cache
       setAllCachedPhrases(aiPhrases, recentMessageTexts);
 
-      // Merge AI phrases with static phrases
-      const staticPhrases: Record<string, AIPrediction[]> = {};
+      // Load database phrases
+      const dbPhrases: Record<string, AIPrediction[]> = {};
       for (const category of categories) {
-        staticPhrases[category] = getStaticPhrases(category);
+        const phrases = await getPhrasesByCategory(category, true); // true = smart sort
+        dbPhrases[category] = phrases.map(phraseToAIPrediction);
       }
 
       const mergedPhrases: Record<string, AIPrediction[]> = {};
       for (const category of categories) {
-        const staticList = staticPhrases[category] || [];
+        const dbList = dbPhrases[category] || [];
         const aiList = aiPhrases[category] || [];
-        // Show AI phrases first (more contextual), then static, limit to 20
-        mergedPhrases[category] = [...aiList, ...staticList].slice(0, 20);
+        // Show AI phrases first (more contextual), then database, limit to 20
+        mergedPhrases[category] = [...aiList, ...dbList].slice(0, 20);
       }
 
       setCategoryPredictions(mergedPhrases);
       setCacheStats(getCacheStats());
-      console.log(`✅ Manual refresh: ${categories.length} categories updated with AI + static phrases`);
+      console.log(`✅ Manual refresh: ${categories.length} categories updated with AI + database phrases`);
     } catch (err) {
       console.error('Error refreshing category predictions:', err);
       setError('Failed to refresh phrases');
     } finally {
       setIsLoading(false);
     }
-  }, [enabled, buildContext, categories, messages]);
+  }, [enabled, buildContext, categories, messages, getPhrasesByCategory]);
 
   /**
    * Initial load on mount only (not on every message change)
@@ -185,6 +214,18 @@ export function useCategoryPhrases({
     loadPhrases();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled]); // Only reload when enabled changes, not on every message
+
+  /**
+   * Track phrase selection and usage
+   */
+  const trackPhraseSelection = useCallback(async (phraseId: string) => {
+    try {
+      await trackUsage(phraseId, 'category'); // 'category' input method for CategoryPhrasesPanel
+      console.log(`✅ Tracked usage for phrase: ${phraseId}`);
+    } catch (err) {
+      console.error('Failed to track phrase usage:', err);
+    }
+  }, [trackUsage]);
 
   // Note: Automatic time-of-day refresh disabled - phrases only refresh when user clicks "Refresh" button
 
@@ -196,5 +237,6 @@ export function useCategoryPhrases({
     activeCategory,
     setActiveCategory,
     cacheStats,
+    trackPhraseSelection,
   };
 }

@@ -32,12 +32,6 @@ export const ThoughtCompletionBar = ({
 
   return (
     <div className="w-full mb-4">
-      <div className="mb-2 px-2">
-        <p className="text-slate-400 text-sm">
-          💬 Next word suggestions:
-        </p>
-      </div>
-
       <div className="grid grid-cols-4 gap-3">
         {predictions.map((prediction) => (
           <PredictionButton
@@ -103,11 +97,6 @@ const PredictionButton = ({ prediction, onSelect, dwellTime }: PredictionButtonP
         <p className="text-xl font-semibold">
           {prediction.content}
         </p>
-
-        {/* Confidence indicator */}
-        <span className="text-xs text-white/70 mt-1 block">
-          {Math.round(prediction.confidence * 100)}%
-        </span>
       </div>
     </button>
   );

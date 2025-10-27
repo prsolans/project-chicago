@@ -3,17 +3,23 @@ import { MessageDisplay } from './components/MessageDisplay/MessageDisplay';
 import { Keyboard } from './components/Keyboard/Keyboard';
 import { ConversationPanel } from './components/ConversationPanel/ConversationPanel';
 import { CategoryPhrasesPanel } from './components/Categories/CategoryPhrasesPanel';
+import { StartersPanel } from './components/Starters/StartersPanel';
 import { ThoughtCompletionBar } from './components/Predictions/ThoughtCompletionBar';
+import { AdminPanel } from './components/Admin/AdminPanel';
 import { useSettingsStore } from './store/settingsStore';
 import { useMessageStore } from './store/messageStore';
 import { useTextToSpeech } from './hooks/useTextToSpeech';
 import { useThoughtCompletion } from './hooks/useThoughtCompletion';
 import { useDwellDetection } from './hooks/useDwellDetection';
+import { initializePhraseLibrary } from './store/phraseLibraryStore';
 import type { AIPrediction } from './types/conversation';
-import { Bot, Folder, MessageSquare } from 'lucide-react';
+import { Bot, MessageSquare, Star, ChevronUp, ChevronDown, Edit } from 'lucide-react';
 
 function App() {
   const [showCategories, setShowCategories] = useState(false);
+  const [activeTab, setActiveTab] = useState<'starters' | 'history' | 'message'>('starters');
+  const [keyboardVisible, setKeyboardVisible] = useState(true);
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
   const { enableAI, setEnableAI, dwellTime } = useSettingsStore();
   const { message, setMessage, sendMessage } = useMessageStore();
   const { speak } = useTextToSpeech();
@@ -25,31 +31,69 @@ function App() {
     triggerPredictions,
     clearPredictions,
   } = useThoughtCompletion({
-    minCharacters: 2,
+    minCharacters: 0, // Allow predictions even for empty input (first word predictions)
     maxPredictions: 8,
     debounceMs: 400,
     enabled: enableAI,
   });
 
-  // Trigger predictions as user types
+  // Always trigger predictions (including for empty messages to show starter words)
   useEffect(() => {
-    const shouldPredict = message.length >= 2 || message.endsWith(' ');
+    triggerPredictions(message);
+  }, [message, triggerPredictions]);
 
-    if (shouldPredict && message.trim().length > 0) {
-      triggerPredictions(message);
-    } else {
-      clearPredictions();
+  // Auto-switch to message tab when user types on keyboard
+  useEffect(() => {
+    if (message.length > 0 && activeTab !== 'message') {
+      setActiveTab('message');
     }
-  }, [message, triggerPredictions, clearPredictions]);
+  }, [message, activeTab]);
+
+  // Initialize phrase library on mount
+  useEffect(() => {
+    initializePhraseLibrary();
+  }, []);
+
+  // Keyboard shortcut to open admin panel (Ctrl+Shift+A)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'A') {
+        e.preventDefault();
+        setShowAdminPanel(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   /**
    * Handle AI prediction selection
-   * Append predicted word to current message
+   * Smart replacement: only replace last word if prediction completes it
    */
   const handlePredictionSelect = (prediction: AIPrediction) => {
     const currentMessage = message.trimEnd();
-    const separator = currentMessage.length > 0 ? ' ' : '';
-    const newMessage = currentMessage + separator + prediction.content;
+    const words = currentMessage.split(' ');
+    const lastWord = words[words.length - 1] || '';
+    const predictionLower = prediction.content.toLowerCase();
+    const lastWordLower = lastWord.toLowerCase();
+
+    // Check if prediction starts with or contains the last word
+    // This indicates it's a completion/replacement (e.g., "wh" → "what")
+    const isCompletion = predictionLower.startsWith(lastWordLower) && lastWord.length > 0;
+
+    let newMessage;
+    if (isCompletion) {
+      // Replace the last word with the prediction
+      words.pop();
+      words.push(prediction.content);
+      newMessage = words.join(' ');
+    } else {
+      // Append the prediction after the current message
+      const separator = currentMessage.length > 0 ? ' ' : '';
+      newMessage = currentMessage + separator + prediction.content;
+    }
+
     setMessage(newMessage, 'predicted');
   };
 
@@ -63,120 +107,201 @@ function App() {
     speak(phrase);
   };
 
-  // Dwell detection for AI toggle button
-  const aiButton = useDwellDetection(dwellTime, () => setEnableAI(!enableAI));
+  // Dwell detection for tabs
+  const startersTab = useDwellDetection(dwellTime, () => setActiveTab('starters'));
+  const historyTab = useDwellDetection(dwellTime, () => setActiveTab('history'));
+  const messageTab = useDwellDetection(dwellTime, () => setActiveTab('message'));
 
-  // Dwell detection for Phrases button
-  const phrasesButton = useDwellDetection(dwellTime, () => setShowCategories(!showCategories));
+  // Dwell detection for keyboard drawer toggle
+  const keyboardToggle = useDwellDetection(dwellTime, () => setKeyboardVisible(!keyboardVisible));
 
   return (
     <div className="h-screen bg-slate-900 flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="flex items-center justify-between px-8 py-6 border-b border-slate-700/50 bg-slate-900/95">
-        <div>
+      <header className="flex items-center justify-center px-8 py-6 border-b border-slate-700/50 bg-slate-900/95">
+        <div className="text-center">
           <h1 className="text-4xl font-bold text-white tracking-tight">HelloFriend</h1>
           <p className="text-base text-slate-400 mt-1 font-light">Look. Dwell. Communicate.</p>
         </div>
-
-        {/* Control buttons */}
-        <div className="flex gap-4">
-          <button
-            onMouseEnter={aiButton.handleMouseEnter}
-            onMouseLeave={aiButton.handleMouseLeave}
-            className={`relative flex items-center gap-3 px-6 py-3 rounded-xl transition-all text-base font-medium shadow-md hover:shadow-lg ${
-              enableAI
-                ? 'bg-gradient-to-br from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-white'
-                : 'bg-slate-700/90 hover:bg-slate-600 text-white'
-            }`}
-          >
-            {aiButton.progress > 0 && (
-              <div
-                className="absolute inset-0 rounded-xl border-4 border-yellow-400 pointer-events-none"
-                style={{
-                  background: `conic-gradient(#facc15 ${aiButton.progress}%, transparent ${aiButton.progress}%)`,
-                  opacity: 0.3,
-                }}
-              />
-            )}
-            <Bot className="w-5 h-5 relative z-10" />
-            <span className="relative z-10">{enableAI ? 'AI On' : 'AI Off'}</span>
-          </button>
-          <button
-            onMouseEnter={phrasesButton.handleMouseEnter}
-            onMouseLeave={phrasesButton.handleMouseLeave}
-            className={`relative flex items-center gap-3 px-6 py-3 rounded-xl transition-all text-base font-medium shadow-md hover:shadow-lg ${
-              showCategories
-                ? 'bg-gradient-to-br from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white'
-                : 'bg-slate-700/90 hover:bg-slate-600 text-white'
-            }`}
-          >
-            {phrasesButton.progress > 0 && (
-              <div
-                className="absolute inset-0 rounded-xl border-4 border-yellow-400 pointer-events-none"
-                style={{
-                  background: `conic-gradient(#facc15 ${phrasesButton.progress}%, transparent ${phrasesButton.progress}%)`,
-                  opacity: 0.3,
-                }}
-              />
-            )}
-            <Folder className="w-5 h-5 relative z-10" />
-            <span className="relative z-10">{showCategories ? 'Hide' : 'Phrases'}</span>
-          </button>
-        </div>
       </header>
 
-      {/* Action Bar - Space/Delete/Speak */}
-      <div className="border-b border-slate-700/50 bg-slate-900/95 py-4">
-        <div className="flex justify-center gap-4 px-8">
-          <Keyboard.ActionButtons />
-        </div>
-      </div>
-
-      {/* Main Content Area - 50/50 split + keyboard at bottom */}
+      {/* Main Content Area - Full Width Tabbed */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Section: 50/50 Split - constrained height to ensure keyboard visible */}
-        <div className="flex-1 grid grid-cols-2 overflow-hidden min-h-0">
-          {/* Left: Conversation History (50%) - Always visible */}
-          <div className="border-r border-slate-700/50 flex flex-col max-h-full">
-            <div className="flex items-center gap-3 p-8 pb-4 flex-shrink-0">
-              <MessageSquare className="w-6 h-6 text-blue-400" />
-              <h2 className="text-white text-2xl font-semibold">Conversation History</h2>
-            </div>
-            <div className="flex-1 overflow-y-auto px-8 pb-8">
-              <ConversationPanel maxHeight="none" />
-            </div>
-          </div>
+        {/* Top Section: Tabbed Content - Full Width */}
+        <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+          {/* Tabbed Section - Full Width */}
+          <div className="flex flex-col max-h-full flex-1">
+            {/* Tab Buttons */}
+            <div className="flex border-b border-slate-700/50 flex-shrink-0">
+              <button
+                onMouseEnter={startersTab.handleMouseEnter}
+                onMouseLeave={startersTab.handleMouseLeave}
+                className={`
+                  relative flex-1 flex items-center justify-center gap-2 px-6 py-4
+                  transition-colors cursor-pointer
+                  ${activeTab === 'starters'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-300'
+                  }
+                `}
+              >
+                {startersTab.progress > 0 && activeTab !== 'starters' && (
+                  <div
+                    className="absolute inset-0 border-4 border-yellow-400 pointer-events-none"
+                    style={{
+                      background: `conic-gradient(#facc15 ${startersTab.progress}%, transparent ${startersTab.progress}%)`,
+                      opacity: 0.3,
+                    }}
+                  />
+                )}
+                <Star className="w-5 h-5 relative z-10" />
+                <span className="text-base font-semibold relative z-10">Starters</span>
+              </button>
 
-          {/* Right: Message Display + AI Predictions (50%) */}
-          <div className="p-8 flex flex-col gap-8">
-            {/* AI Predictions at top of right column */}
-            {(predictions.length > 0 || isPredictionsLoading) && (
-              <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <Bot className="w-5 h-5 text-green-400" />
-                  <h3 className="text-white text-lg font-semibold">AI Word Predictions</h3>
+              <button
+                onMouseEnter={historyTab.handleMouseEnter}
+                onMouseLeave={historyTab.handleMouseLeave}
+                className={`
+                  relative flex-1 flex items-center justify-center gap-2 px-6 py-4
+                  transition-colors cursor-pointer
+                  ${activeTab === 'history'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-300'
+                  }
+                `}
+              >
+                {historyTab.progress > 0 && activeTab !== 'history' && (
+                  <div
+                    className="absolute inset-0 border-4 border-yellow-400 pointer-events-none"
+                    style={{
+                      background: `conic-gradient(#facc15 ${historyTab.progress}%, transparent ${historyTab.progress}%)`,
+                      opacity: 0.3,
+                    }}
+                  />
+                )}
+                <MessageSquare className="w-5 h-5 relative z-10" />
+                <span className="text-base font-semibold relative z-10">History</span>
+              </button>
+
+              <button
+                onMouseEnter={messageTab.handleMouseEnter}
+                onMouseLeave={messageTab.handleMouseLeave}
+                className={`
+                  relative flex-1 flex items-center justify-center gap-2 px-6 py-4
+                  transition-colors cursor-pointer
+                  ${activeTab === 'message'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-300'
+                  }
+                `}
+              >
+                {messageTab.progress > 0 && activeTab !== 'message' && (
+                  <div
+                    className="absolute inset-0 border-4 border-yellow-400 pointer-events-none"
+                    style={{
+                      background: `conic-gradient(#facc15 ${messageTab.progress}%, transparent ${messageTab.progress}%)`,
+                      opacity: 0.3,
+                    }}
+                  />
+                )}
+                <Edit className="w-5 h-5 relative z-10" />
+                <span className="text-base font-semibold relative z-10">Message</span>
+              </button>
+            </div>
+
+            {/* Tab Content */}
+            <div className="flex-1 overflow-hidden">
+              {activeTab === 'starters' && (
+                <div className="p-6 h-full overflow-y-auto">
+                  <StartersPanel />
                 </div>
-                <ThoughtCompletionBar
-                  predictions={predictions}
-                  onSelectPrediction={handlePredictionSelect}
-                  isLoading={isPredictionsLoading}
-                />
-              </div>
-            )}
+              )}
 
-            {/* Message Display */}
-            <div className="flex-1 flex items-center justify-center">
-              <div className="w-full">
-                <MessageDisplay />
-              </div>
+              {activeTab === 'history' && (
+                <div className="flex flex-col h-full">
+                  <div className="flex items-center gap-3 px-8 pt-6 pb-4 flex-shrink-0">
+                    <MessageSquare className="w-6 h-6 text-blue-400" />
+                    <h2 className="text-white text-xl font-semibold">Your Messages</h2>
+                  </div>
+                  <div className="flex-1 overflow-y-auto px-8 pb-8">
+                    <ConversationPanel maxHeight="none" />
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'message' && (
+                <div className="p-8 flex flex-col gap-8 h-full overflow-y-auto">
+                  {/* AI Predictions */}
+                  {(predictions.length > 0 || isPredictionsLoading) && (
+                    <ThoughtCompletionBar
+                      predictions={predictions}
+                      onSelectPrediction={handlePredictionSelect}
+                      isLoading={isPredictionsLoading}
+                    />
+                  )}
+
+                  {/* Message Display */}
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="w-full max-w-4xl">
+                      <MessageDisplay />
+                    </div>
+                  </div>
+
+                  {/* Action Buttons - Space/Delete/Clear/Speak */}
+                  <div className="flex justify-center gap-4 pb-4">
+                    <Keyboard.ActionButtons />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Bottom Section: Keyboard (Full Width) - locked at bottom, 3 rows only */}
-        <div className="border-t border-slate-700/50 flex-shrink-0 h-[270px]">
-          <Keyboard />
-        </div>
+        {/* Bottom Section: Keyboard Drawer (Full Width) */}
+        {keyboardVisible ? (
+          <div className="border-t border-slate-700/50 flex-shrink-0 h-[270px] flex flex-col mb-6">
+            {/* Keyboard Toggle Bar */}
+            <button
+              onMouseEnter={keyboardToggle.handleMouseEnter}
+              onMouseLeave={keyboardToggle.handleMouseLeave}
+              className="relative w-full bg-slate-800 hover:bg-slate-700 py-2 flex items-center justify-center gap-2 text-slate-300 hover:text-white transition-colors cursor-pointer border-b border-slate-700/50"
+            >
+              {keyboardToggle.progress > 0 && (
+                <div
+                  className="absolute inset-0 border-4 border-yellow-400 pointer-events-none"
+                  style={{
+                    background: `conic-gradient(#facc15 ${keyboardToggle.progress}%, transparent ${keyboardToggle.progress}%)`,
+                    opacity: 0.3,
+                  }}
+                />
+              )}
+              <ChevronDown className="w-5 h-5 relative z-10" />
+              <span className="text-sm font-medium relative z-10">Hide Keyboard</span>
+            </button>
+            <Keyboard />
+          </div>
+        ) : (
+          <div className="border-t border-slate-700/50 flex-shrink-0 mb-6">
+            {/* Collapsed Keyboard Drawer */}
+            <button
+              onMouseEnter={keyboardToggle.handleMouseEnter}
+              onMouseLeave={keyboardToggle.handleMouseLeave}
+              className="relative w-full bg-slate-800 hover:bg-slate-700 py-4 flex items-center justify-center gap-2 text-slate-300 hover:text-white transition-colors cursor-pointer"
+            >
+              {keyboardToggle.progress > 0 && (
+                <div
+                  className="absolute inset-0 border-4 border-yellow-400 pointer-events-none"
+                  style={{
+                    background: `conic-gradient(#facc15 ${keyboardToggle.progress}%, transparent ${keyboardToggle.progress}%)`,
+                    opacity: 0.3,
+                  }}
+                />
+              )}
+              <ChevronUp className="w-5 h-5 relative z-10" />
+              <span className="text-base font-medium relative z-10">Show Keyboard</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Full Screen Category Phrases Overlay */}
@@ -186,6 +311,11 @@ function App() {
           isFullScreen={true}
           onClose={() => setShowCategories(false)}
         />
+      )}
+
+      {/* Admin Panel (Ctrl+Shift+A) */}
+      {showAdminPanel && (
+        <AdminPanel onClose={() => setShowAdminPanel(false)} />
       )}
     </div>
   );
