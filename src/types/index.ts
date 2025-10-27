@@ -25,3 +25,6 @@ export interface Prediction {
   confidence: number;
   source: 'local' | 'ai';
 }
+
+// Export conversation types
+export * from './conversation';

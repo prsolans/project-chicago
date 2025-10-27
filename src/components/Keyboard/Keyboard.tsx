@@ -2,9 +2,11 @@ import { Key } from './Key';
 import type { KeyConfig } from '../../types/index';
 import { useMessageStore } from '../../store/messageStore';
 import { useTextToSpeech } from '../../hooks/useTextToSpeech';
-import { useMemo } from 'react';
+import { useDwellDetection } from '../../hooks/useDwellDetection';
+import { useSettingsStore } from '../../store/settingsStore';
 
-const BASE_KEYBOARD_LAYOUT: KeyConfig[] = [
+// Only letter keys - 3 rows
+const LETTER_KEYBOARD_LAYOUT: KeyConfig[] = [
   // Row 1
   { id: 'q', label: 'Q', value: 'q', type: 'letter', gridArea: '1 / 1 / 2 / 2' },
   { id: 'w', label: 'W', value: 'w', type: 'letter', gridArea: '1 / 2 / 2 / 3' },
@@ -36,61 +38,141 @@ const BASE_KEYBOARD_LAYOUT: KeyConfig[] = [
   { id: 'b', label: 'B', value: 'b', type: 'letter', gridArea: '3 / 5 / 4 / 6' },
   { id: 'n', label: 'N', value: 'n', type: 'letter', gridArea: '3 / 6 / 4 / 7' },
   { id: 'm', label: 'M', value: 'm', type: 'letter', gridArea: '3 / 7 / 4 / 8' },
-
-  // Function keys
-  { id: 'space', label: 'Space', value: ' ', type: 'space', gridArea: '4 / 1 / 5 / 6' },
-  { id: 'delete', label: '⌫', value: 'delete', type: 'delete', gridArea: '4 / 6 / 5 / 8' },
-  { id: 'speak', label: '🔊 Speak', value: 'speak', type: 'speak', gridArea: '4 / 8 / 5 / 11' },
 ];
 
-export const Keyboard = () => {
-  const { message, addCharacter, deleteCharacter, addSpace } = useMessageStore();
-  const { speak, isSpeaking, isLoading } = useTextToSpeech();
+// Action Buttons Component (Space, Delete, Clear, Speak)
+const ActionButtons = () => {
+  const { message, deleteCharacter, addSpace, sendMessage, clear } = useMessageStore();
+  const { speak, isSpeaking, isLoading: isSpeaking_loading } = useTextToSpeech();
+  const { dwellTime } = useSettingsStore();
 
-  // Dynamic keyboard layout with updated speak button label
-  const keyboardLayout = useMemo(() => {
-    return BASE_KEYBOARD_LAYOUT.map((key) => {
-      if (key.id === 'speak') {
-        let label = '🔊 Speak';
-        if (isLoading) {
-          label = '⏳ Loading...';
-        } else if (isSpeaking) {
-          label = '🔊 Speaking...';
-        }
-        return { ...key, label };
-      }
-      return key;
-    });
-  }, [isSpeaking, isLoading]);
-
-  const handleKeySelect = (value: string) => {
-    if (value === 'delete') {
-      deleteCharacter();
-    } else if (value === ' ') {
-      addSpace();
-    } else if (value === 'speak') {
-      // Speak the current message
-      if (message && message.trim()) {
-        speak(message);
-      }
-    } else {
-      addCharacter(value);
-    }
+  const getSpeakLabel = () => {
+    if (isSpeaking_loading) return 'Loading...';
+    if (isSpeaking) return 'Speaking...';
+    return 'Speak';
   };
 
+  // Space button dwell
+  const spaceButton = useDwellDetection(dwellTime, () => addSpace());
+
+  // Delete button dwell
+  const deleteButton = useDwellDetection(dwellTime, () => deleteCharacter());
+
+  // Clear button dwell
+  const clearButton = useDwellDetection(dwellTime, () => clear());
+
+  // Speak button dwell
+  const speakButton = useDwellDetection(dwellTime, () => {
+    if (message && message.trim()) {
+      sendMessage();
+      speak(message);
+    }
+  });
+
   return (
-    <div className="w-full max-w-6xl mx-auto p-4">
-      <div
-        className="grid gap-3"
-        style={{
-          gridTemplateColumns: 'repeat(10, 1fr)',
-          gridTemplateRows: 'repeat(4, 1fr)',
-        }}
+    <>
+      {/* Space */}
+      <button
+        className="relative flex items-center justify-center text-center text-lg font-semibold rounded-2xl transition-all cursor-pointer select-none shadow-md hover:shadow-lg bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white h-[70px] w-[240px]"
+        onMouseEnter={spaceButton.handleMouseEnter}
+        onMouseLeave={spaceButton.handleMouseLeave}
       >
-        {keyboardLayout.map((key) => (
-          <Key key={key.id} config={key} onSelect={handleKeySelect} />
-        ))}
-      </div>
-    </div>
+        {spaceButton.progress > 0 && (
+          <div
+            className="absolute inset-0 rounded-2xl border-4 border-yellow-400 pointer-events-none"
+            style={{
+              background: `conic-gradient(#facc15 ${spaceButton.progress}%, transparent ${spaceButton.progress}%)`,
+              opacity: 0.3,
+            }}
+          />
+        )}
+        <span className="relative z-10">Space</span>
+      </button>
+
+      {/* Delete */}
+      <button
+        className="relative flex items-center justify-center text-center text-lg font-semibold rounded-2xl transition-all cursor-pointer select-none shadow-md hover:shadow-lg bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white h-[70px] w-[180px]"
+        onMouseEnter={deleteButton.handleMouseEnter}
+        onMouseLeave={deleteButton.handleMouseLeave}
+      >
+        {deleteButton.progress > 0 && (
+          <div
+            className="absolute inset-0 rounded-2xl border-4 border-yellow-400 pointer-events-none"
+            style={{
+              background: `conic-gradient(#facc15 ${deleteButton.progress}%, transparent ${deleteButton.progress}%)`,
+              opacity: 0.3,
+            }}
+          />
+        )}
+        <span className="relative z-10">Delete</span>
+      </button>
+
+      {/* Clear */}
+      <button
+        className="relative flex items-center justify-center text-center text-lg font-semibold rounded-2xl transition-all cursor-pointer select-none shadow-md hover:shadow-lg bg-gradient-to-br from-orange-600 to-orange-700 hover:from-orange-500 hover:to-orange-600 text-white h-[70px] w-[180px]"
+        onMouseEnter={clearButton.handleMouseEnter}
+        onMouseLeave={clearButton.handleMouseLeave}
+      >
+        {clearButton.progress > 0 && (
+          <div
+            className="absolute inset-0 rounded-2xl border-4 border-yellow-400 pointer-events-none"
+            style={{
+              background: `conic-gradient(#facc15 ${clearButton.progress}%, transparent ${clearButton.progress}%)`,
+              opacity: 0.3,
+            }}
+          />
+        )}
+        <span className="relative z-10">Clear</span>
+      </button>
+
+      {/* Speak */}
+      <button
+        className="relative flex items-center justify-center text-center text-lg font-semibold rounded-2xl transition-all cursor-pointer select-none shadow-md hover:shadow-lg bg-gradient-to-br from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-white h-[70px] w-[240px]"
+        onMouseEnter={speakButton.handleMouseEnter}
+        onMouseLeave={speakButton.handleMouseLeave}
+      >
+        {speakButton.progress > 0 && (
+          <div
+            className="absolute inset-0 rounded-2xl border-4 border-yellow-400 pointer-events-none"
+            style={{
+              background: `conic-gradient(#facc15 ${speakButton.progress}%, transparent ${speakButton.progress}%)`,
+              opacity: 0.3,
+            }}
+          />
+        )}
+        <span className="relative z-10">{getSpeakLabel()}</span>
+      </button>
+    </>
   );
 };
+
+// Main Keyboard Component (letters only)
+export const Keyboard = Object.assign(
+  () => {
+    const { addCharacter } = useMessageStore();
+
+    const handleKeySelect = (value: string) => {
+      addCharacter(value);
+    };
+
+    return (
+      <div className="w-full h-full bg-slate-850 flex items-center justify-center">
+        {/* Letter Keyboard - 3 rows */}
+        <div className="w-full max-w-7xl px-4">
+          <div
+            className="grid gap-3"
+            style={{
+              gridTemplateColumns: 'repeat(10, 1fr)',
+              gridTemplateRows: 'repeat(3, 75px)',
+            }}
+          >
+            {LETTER_KEYBOARD_LAYOUT.map((key) => (
+              <Key key={key.id} config={key} onSelect={handleKeySelect} />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  },
+  { ActionButtons }
+);

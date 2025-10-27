@@ -1,6 +1,9 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  /* Enable all utilities including gradients, shadows, etc. */
+  --color-slate-850: #0f1729;
+}
 
 body {
   margin: 0;

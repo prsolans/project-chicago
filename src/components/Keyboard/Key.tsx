@@ -26,21 +26,21 @@ export const Key = ({ config, onSelect }: KeyProps) => {
   );
 
   const getKeyStyle = () => {
-    const baseStyle = 'relative flex items-center justify-center text-2xl font-bold rounded-lg transition-all cursor-pointer select-none';
+    const baseStyle = 'relative flex items-center justify-center text-center text-2xl font-semibold rounded-2xl transition-all cursor-pointer select-none shadow-md hover:shadow-lg';
 
     switch (config.type) {
       case 'letter':
-        return `${baseStyle} bg-slate-700 hover:bg-slate-600 text-white min-h-[80px]`;
+        return `${baseStyle} bg-slate-700/90 hover:bg-slate-600 text-white h-[75px]`;
       case 'space':
-        return `${baseStyle} bg-blue-600 hover:bg-blue-500 text-white min-h-[80px]`;
+        return `${baseStyle} bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white h-[75px]`;
       case 'delete':
-        return `${baseStyle} bg-red-600 hover:bg-red-500 text-white min-h-[80px]`;
+        return `${baseStyle} bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white h-[75px]`;
       case 'speak':
-        return `${baseStyle} bg-green-600 hover:bg-green-500 text-white min-h-[80px]`;
+        return `${baseStyle} bg-gradient-to-br from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-white h-[75px]`;
       case 'clear':
-        return `${baseStyle} bg-orange-600 hover:bg-orange-500 text-white min-h-[80px]`;
+        return `${baseStyle} bg-gradient-to-br from-orange-600 to-orange-700 hover:from-orange-500 hover:to-orange-600 text-white h-[75px]`;
       default:
-        return `${baseStyle} bg-slate-700 hover:bg-slate-600 text-white min-h-[80px]`;
+        return `${baseStyle} bg-slate-700/90 hover:bg-slate-600 text-white h-[75px]`;
     }
   };
 
@@ -54,7 +54,7 @@ export const Key = ({ config, onSelect }: KeyProps) => {
       {/* Dwell progress indicator */}
       {progress > 0 && (
         <div
-          className="absolute inset-0 rounded-lg border-4 border-yellow-400"
+          className="absolute inset-0 rounded-2xl border-4 border-yellow-400 pointer-events-none"
           style={{
             background: `conic-gradient(#facc15 ${progress}%, transparent ${progress}%)`,
             opacity: 0.3,
@@ -63,7 +63,9 @@ export const Key = ({ config, onSelect }: KeyProps) => {
       )}
 
       {/* Key label */}
-      <span className="relative z-10">{config.label}</span>
+      <span className={`relative z-10 ${config.type === 'letter' ? 'text-2xl' : 'text-lg'}`}>
+        {config.label}
+      </span>
     </div>
   );
 };
