@@ -57,7 +57,7 @@ export const AdminPanel = ({ onClose }: AdminPanelProps) => {
       const migrationSQL = await fetch('/supabase/migrations/001_initial_schema.sql').then(r => r.text());
 
       // Execute migration using Supabase SDK
-      const { error } = await supabase.rpc('exec_sql', { sql: migrationSQL });
+      const { error } = await (supabase as any).rpc('exec_sql', { sql: migrationSQL });
 
       if (error) {
         // If exec_sql doesn't exist, we need to run it manually via SQL Editor

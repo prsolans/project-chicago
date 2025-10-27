@@ -7,7 +7,6 @@ import { supabase } from '../lib/supabase';
 import { findPhraseByText } from './phraseService';
 import type {
   PhraseCandidate,
-  PhraseCandidateInsert,
   PendingCandidate,
   PhraseCategory,
   TimeOfDay,
@@ -51,7 +50,7 @@ export async function trackTypedMessage(
   }
 
   // Track or update candidate
-  const { data, error } = await supabase.rpc('track_candidate_phrase', {
+  const { data, error } = await (supabase as any).rpc('track_candidate_phrase', {
     p_text: text,
     p_suggested_category: category,
   });
@@ -138,7 +137,7 @@ export async function promoteCandidate(
   category: PhraseCategory,
   timeOfDay: TimeOfDay = 'anytime'
 ): Promise<{ success: boolean; phraseId?: string }> {
-  const { data, error } = await supabase.rpc('promote_candidate_to_phrase', {
+  const { data, error } = await (supabase as any).rpc('promote_candidate_to_phrase', {
     p_candidate_id: candidateId,
     p_category: category,
     p_time_of_day: timeOfDay,
@@ -156,7 +155,7 @@ export async function promoteCandidate(
  * Reject a candidate (mark as rejected)
  */
 export async function rejectCandidate(candidateId: string): Promise<boolean> {
-  const { error } = await supabase
+  const { error } = await (supabase as any)
     .from('phrase_candidates')
     .update({ status: 'rejected' })
     .eq('id', candidateId);
@@ -177,7 +176,7 @@ export async function addToConversationHistory(
 ): Promise<void> {
   const { error } = await supabase
     .from('conversation_history')
-    .insert(message);
+    .insert(message as any);
 
   if (error) {
     console.error('Error adding to conversation history:', error);
@@ -217,7 +216,7 @@ export async function analyzeHistoryForCandidates(): Promise<{
     .select('content')
     .eq('input_method', 'typed')
     .gte('timestamp', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()) // Last 30 days
-    .order('timestamp', { ascending: false });
+    .order('timestamp', { ascending: false }) as any;
 
   if (error || !messages) {
     console.error('Error analyzing history:', error);
@@ -226,7 +225,7 @@ export async function analyzeHistoryForCandidates(): Promise<{
 
   // Count frequency of each message
   const messageCounts = new Map<string, number>();
-  messages.forEach(msg => {
+  messages.forEach((msg: any) => {
     const text = msg.content.trim();
     const wordCount = text.split(/\s+/).length;
 

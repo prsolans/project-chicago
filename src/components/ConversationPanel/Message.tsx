@@ -28,6 +28,7 @@ export const Message = ({ message }: MessageProps) => {
       quick_phrase: Zap,
       thought_stream: MessageCircle,
       category: Folder,
+      starter: Folder,
     };
     return iconMap[message.method] || null;
   }, [message.method]);

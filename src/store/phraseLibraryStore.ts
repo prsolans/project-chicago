@@ -8,7 +8,6 @@ import { persist } from 'zustand/middleware';
 import type { Phrase, PhraseCategory, InputMethod } from '../types/database';
 import {
   getAllPhrases,
-  getPhrasesByCategory,
   getSmartPhrasesForCategory,
   addPhrase,
   updatePhrase,
@@ -219,6 +218,9 @@ export const usePhraseLibrary = create<PhraseLibraryState>()(
           social: 0,
           responses: 0,
           questions: 0,
+          food: 0,
+          feelings: 0,
+          entertainment: 0,
         };
 
         phrases.forEach(p => {

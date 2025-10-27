@@ -136,7 +136,7 @@ export async function getTopPhrasesByCategory(
 export async function addPhrase(phrase: PhraseInsert): Promise<Phrase> {
   const { data, error } = await supabase
     .from('phrases')
-    .insert(phrase)
+    .insert(phrase as any)
     .select()
     .single();
 
@@ -152,7 +152,7 @@ export async function addPhrase(phrase: PhraseInsert): Promise<Phrase> {
  * Update an existing phrase
  */
 export async function updatePhrase(id: string, updates: PhraseUpdate): Promise<Phrase> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('phrases')
     .update(updates)
     .eq('id', id)
@@ -171,7 +171,7 @@ export async function updatePhrase(id: string, updates: PhraseUpdate): Promise<P
  * Soft delete a phrase (set is_active = false)
  */
 export async function deletePhrase(id: string): Promise<void> {
-  const { error } = await supabase
+  const { error } = await (supabase as any)
     .from('phrases')
     .update({ is_active: false })
     .eq('id', id);
@@ -189,7 +189,7 @@ export async function trackPhraseUsage(
   phraseId: string,
   inputMethod: InputMethod
 ): Promise<void> {
-  const { error } = await supabase.rpc('track_phrase_usage', {
+  const { error } = await (supabase as any).rpc('track_phrase_usage', {
     p_phrase_id: phraseId,
     p_input_method: inputMethod,
   });
@@ -226,7 +226,7 @@ export async function findPhraseByText(text: string): Promise<Phrase | null> {
 export async function bulkInsertPhrases(phrases: PhraseInsert[]): Promise<Phrase[]> {
   const { data, error } = await supabase
     .from('phrases')
-    .upsert(phrases, {
+    .upsert(phrases as any, {
       onConflict: 'text', // Match on unique text constraint
       ignoreDuplicates: false, // Update existing rows
     })

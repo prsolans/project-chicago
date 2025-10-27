@@ -14,8 +14,7 @@ import {
   HelpCircle,
   UtensilsCrossed,
   Smile,
-  Tv,
-  ArrowLeft
+  Tv
 } from 'lucide-react';
 
 const CATEGORIES = [
@@ -56,10 +55,6 @@ export const StartersPanel = ({ className = '' }: StartersPanelProps) => {
 
   const handleCategorySelect = (categoryId: PhraseCategory) => {
     setSelectedCategory(categoryId);
-  };
-
-  const handleBack = () => {
-    setSelectedCategory(null);
   };
 
   const handlePhraseSelect = (phrase: Phrase) => {
@@ -182,42 +177,6 @@ const CategoryButton = ({ label, icon: Icon, color, onSelect, dwellTime }: Categ
 
       <Icon className="w-12 h-12 relative z-10" />
       <span className="relative z-10">{label}</span>
-    </button>
-  );
-};
-
-/**
- * Back Button Component (Level 2)
- */
-interface BackButtonProps {
-  onBack: () => void;
-  dwellTime: number;
-}
-
-const BackButton = ({ onBack, dwellTime }: BackButtonProps) => {
-  const { progress, handleMouseEnter, handleMouseLeave } = useDwellDetection(
-    dwellTime,
-    onBack
-  );
-
-  return (
-    <button
-      className="relative flex items-center gap-3 px-6 py-3 rounded-xl bg-slate-700/90 hover:bg-slate-600 text-white font-semibold text-lg transition-all cursor-pointer shadow-md hover:shadow-lg"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      {progress > 0 && (
-        <div
-          className="absolute inset-0 rounded-xl border-4 border-yellow-400 pointer-events-none"
-          style={{
-            background: `conic-gradient(#facc15 ${progress}%, transparent ${progress}%)`,
-            opacity: 0.3,
-          }}
-        />
-      )}
-
-      <ArrowLeft className="w-5 h-5 relative z-10" />
-      <span className="relative z-10">Back to Categories</span>
     </button>
   );
 };

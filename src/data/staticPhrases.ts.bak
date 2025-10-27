@@ -6,7 +6,7 @@
 import type { AIPrediction } from '../types/conversation';
 
 export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'anytime';
-export type PhraseCategory = 'medical' | 'comfort' | 'social' | 'responses' | 'questions' | 'family' | 'food' | 'feelings' | 'entertainment';
+export type PhraseCategory = 'medical' | 'comfort' | 'social' | 'responses' | 'questions' | 'family';
 
 interface StaticPhrase {
   content: string;
@@ -141,6 +141,9 @@ const SOCIAL_PHRASES: Record<TimeOfDay | 'anytime', StaticPhrase[]> = {
     { content: 'Good evening', confidence: 0.95, timeAware: true },
     { content: 'How was your day?', confidence: 0.85, timeAware: true },
     { content: 'Good night', confidence: 0.9, timeAware: true },
+  ],
+  night: [
+    { content: 'Good night', confidence: 0.95, timeAware: true },
     { content: 'See you in the morning', confidence: 0.85, timeAware: true },
   ],
   anytime: [
@@ -195,6 +198,7 @@ const RESPONSE_PHRASES: Record<TimeOfDay | 'anytime', StaticPhrase[]> = {
   morning: [],
   afternoon: [],
   evening: [],
+  night: [],
   anytime: [
     { content: 'Yes', confidence: 0.95 },
     { content: 'No', confidence: 0.95 },
@@ -256,6 +260,8 @@ const QUESTION_PHRASES: Record<TimeOfDay | 'anytime', StaticPhrase[]> = {
   evening: [
     { content: 'What\'s for dinner?', confidence: 0.8, timeAware: true },
     { content: 'What are we watching tonight?', confidence: 0.7, timeAware: true },
+  ],
+  night: [
     { content: 'Can I sleep now?', confidence: 0.75, timeAware: true },
     { content: 'Will you check on me later?', confidence: 0.7, timeAware: true },
   ],
@@ -347,6 +353,9 @@ const FAMILY_PHRASES: Record<TimeOfDay | 'anytime', StaticPhrase[]> = {
     { content: 'Have a good rest Tony', confidence: 0.85, timeAware: true },
     { content: 'Sleep tight kids', confidence: 0.85, timeAware: true },
     { content: 'Dream of good things', confidence: 0.8, timeAware: true },
+  ],
+  night: [
+    { content: 'I love you Tony', confidence: 0.95, timeAware: true },
     { content: 'Good night everyone', confidence: 0.9, timeAware: true },
   ],
   anytime: [
@@ -413,159 +422,6 @@ const FAMILY_PHRASES: Record<TimeOfDay | 'anytime', StaticPhrase[]> = {
 };
 
 /**
- * Food/Drink phrases - hunger, thirst, and meal needs
- */
-const FOOD_PHRASES: Record<TimeOfDay | 'anytime', StaticPhrase[]> = {
-  morning: [
-    { content: 'Can I have breakfast?', confidence: 0.9, timeAware: true },
-    { content: 'I\'d like some coffee', confidence: 0.85, timeAware: true },
-    { content: 'Can I have orange juice?', confidence: 0.8, timeAware: true },
-    { content: 'I\'d like some cereal', confidence: 0.8, timeAware: true },
-    { content: 'Can I have toast?', confidence: 0.75, timeAware: true },
-    { content: 'I need my morning coffee', confidence: 0.85, timeAware: true },
-  ],
-  afternoon: [
-    { content: 'Can I have lunch?', confidence: 0.9, timeAware: true },
-    { content: 'I\'d like a sandwich', confidence: 0.8, timeAware: true },
-    { content: 'Can I have a snack?', confidence: 0.85, timeAware: true },
-    { content: 'I\'d like some soup', confidence: 0.75, timeAware: true },
-  ],
-  evening: [
-    { content: 'Can I have dinner?', confidence: 0.9, timeAware: true },
-    { content: 'I\'m ready for dinner', confidence: 0.85, timeAware: true },
-    { content: 'What\'s for dinner?', confidence: 0.8, timeAware: true },
-    { content: 'Can I have dessert?', confidence: 0.75, timeAware: true },
-  ],
-  anytime: [
-    { content: 'I\'m hungry', confidence: 0.95 },
-    { content: 'I\'m thirsty', confidence: 0.95 },
-    { content: 'Can I have water?', confidence: 0.9 },
-    { content: 'Can I have something to eat?', confidence: 0.9 },
-    { content: 'Can I have something to drink?', confidence: 0.9 },
-    { content: 'I need a straw', confidence: 0.85 },
-    { content: 'Can you help me eat?', confidence: 0.85 },
-    { content: 'Can you help me drink?', confidence: 0.85 },
-    { content: 'I\'d like some ice water', confidence: 0.8 },
-    { content: 'Can I have juice?', confidence: 0.8 },
-    { content: 'Can I have tea?', confidence: 0.75 },
-    { content: 'I\'d like a smoothie', confidence: 0.7 },
-    { content: 'Can I have milk?', confidence: 0.75 },
-    { content: 'Can I have soda?', confidence: 0.7 },
-    { content: 'I\'m full', confidence: 0.8 },
-    { content: 'I can\'t eat anymore', confidence: 0.75 },
-    { content: 'This tastes good', confidence: 0.8 },
-    { content: 'I don\'t like this', confidence: 0.75 },
-    { content: 'Can I have more?', confidence: 0.8 },
-    { content: 'That\'s enough, thank you', confidence: 0.85 },
-    { content: 'Can I have a different flavor?', confidence: 0.7 },
-    { content: 'Too much ice', confidence: 0.7 },
-    { content: 'Not enough ice', confidence: 0.7 },
-    { content: 'Can you warm this up?', confidence: 0.75 },
-    { content: 'This is too hot', confidence: 0.75 },
-    { content: 'This is too cold', confidence: 0.75 },
-  ],
-};
-
-/**
- * Feelings phrases - emotional expression
- */
-const FEELINGS_PHRASES: Record<TimeOfDay | 'anytime', StaticPhrase[]> = {
-  morning: [
-    { content: 'I slept well', confidence: 0.85, timeAware: true },
-    { content: 'I didn\'t sleep well', confidence: 0.8, timeAware: true },
-    { content: 'I feel refreshed', confidence: 0.75, timeAware: true },
-    { content: 'I\'m still tired', confidence: 0.8, timeAware: true },
-  ],
-  afternoon: [],
-  evening: [
-    { content: 'I\'m tired', confidence: 0.85, timeAware: true },
-    { content: 'I\'m exhausted', confidence: 0.8, timeAware: true },
-    { content: 'I\'m ready to rest', confidence: 0.8, timeAware: true },
-  ],
-  anytime: [
-    { content: 'I\'m happy', confidence: 0.9 },
-    { content: 'I\'m sad', confidence: 0.85 },
-    { content: 'I\'m frustrated', confidence: 0.85 },
-    { content: 'I\'m scared', confidence: 0.8 },
-    { content: 'I\'m anxious', confidence: 0.8 },
-    { content: 'I\'m worried', confidence: 0.8 },
-    { content: 'I\'m angry', confidence: 0.75 },
-    { content: 'I\'m upset', confidence: 0.8 },
-    { content: 'I\'m lonely', confidence: 0.75 },
-    { content: 'I\'m grateful', confidence: 0.85 },
-    { content: 'I\'m thankful', confidence: 0.85 },
-    { content: 'I\'m proud', confidence: 0.8 },
-    { content: 'I\'m excited', confidence: 0.8 },
-    { content: 'I\'m nervous', confidence: 0.75 },
-    { content: 'I\'m overwhelmed', confidence: 0.8 },
-    { content: 'I\'m calm', confidence: 0.8 },
-    { content: 'I\'m peaceful', confidence: 0.75 },
-    { content: 'I\'m stressed', confidence: 0.8 },
-    { content: 'I\'m bored', confidence: 0.75 },
-    { content: 'I\'m content', confidence: 0.8 },
-    { content: 'I feel loved', confidence: 0.85 },
-    { content: 'I feel safe', confidence: 0.8 },
-    { content: 'I feel uncomfortable', confidence: 0.8 },
-    { content: 'I\'m feeling down', confidence: 0.8 },
-    { content: 'I\'m feeling better', confidence: 0.85 },
-    { content: 'I\'m feeling worse', confidence: 0.8 },
-    { content: 'I need someone to talk to', confidence: 0.8 },
-    { content: 'I just need a moment', confidence: 0.75 },
-    { content: 'I\'m okay', confidence: 0.85 },
-    { content: 'I\'m not okay', confidence: 0.85 },
-  ],
-};
-
-/**
- * Entertainment phrases - TV, music, movies, activities
- */
-const ENTERTAINMENT_PHRASES: Record<TimeOfDay | 'anytime', StaticPhrase[]> = {
-  morning: [
-    { content: 'Can we watch the morning news?', confidence: 0.8, timeAware: true },
-    { content: 'Can you turn on morning TV?', confidence: 0.75, timeAware: true },
-  ],
-  afternoon: [
-    { content: 'Can we watch a movie?', confidence: 0.8, timeAware: true },
-    { content: 'I\'d like to watch TV', confidence: 0.85, timeAware: true },
-  ],
-  evening: [
-    { content: 'Can we watch our show?', confidence: 0.85, timeAware: true },
-    { content: 'What\'s on TV tonight?', confidence: 0.8, timeAware: true },
-    { content: 'Can we watch a movie tonight?', confidence: 0.8, timeAware: true },
-  ],
-  anytime: [
-    { content: 'Can you turn on the TV?', confidence: 0.9 },
-    { content: 'Can you change the channel?', confidence: 0.85 },
-    { content: 'Turn the volume up', confidence: 0.85 },
-    { content: 'Turn the volume down', confidence: 0.85 },
-    { content: 'Can you turn on music?', confidence: 0.85 },
-    { content: 'Can you play my favorite song?', confidence: 0.8 },
-    { content: 'I\'d like to listen to music', confidence: 0.85 },
-    { content: 'Can we watch a movie?', confidence: 0.85 },
-    { content: 'What\'s on TV?', confidence: 0.8 },
-    { content: 'Can you turn off the TV?', confidence: 0.8 },
-    { content: 'Can you pause this?', confidence: 0.8 },
-    { content: 'Can you turn off the music?', confidence: 0.75 },
-    { content: 'Let\'s watch something funny', confidence: 0.75 },
-    { content: 'I want to watch the news', confidence: 0.8 },
-    { content: 'Can we watch sports?', confidence: 0.75 },
-    { content: 'Can you find a good show?', confidence: 0.75 },
-    { content: 'I like this show', confidence: 0.8 },
-    { content: 'I don\'t like this', confidence: 0.75 },
-    { content: 'Can you change this?', confidence: 0.8 },
-    { content: 'Can we watch Netflix?', confidence: 0.8 },
-    { content: 'I\'d like to read', confidence: 0.75 },
-    { content: 'Can you read to me?', confidence: 0.75 },
-    { content: 'Can we play a game?', confidence: 0.7 },
-    { content: 'This is too loud', confidence: 0.8 },
-    { content: 'I can\'t hear it', confidence: 0.8 },
-    { content: 'Can you rewind that?', confidence: 0.7 },
-    { content: 'Turn on closed captions', confidence: 0.75 },
-    { content: 'Turn off closed captions', confidence: 0.7 },
-  ],
-};
-
-/**
  * Get current time of day based on hour
  */
 export function getCurrentTimeOfDay(): TimeOfDay {
@@ -574,7 +430,7 @@ export function getCurrentTimeOfDay(): TimeOfDay {
   if (hour >= 5 && hour < 12) return 'morning';
   if (hour >= 12 && hour < 17) return 'afternoon';
   if (hour >= 17 && hour < 21) return 'evening';
-  return 'anytime';
+  return 'night';
 }
 
 /**
@@ -587,9 +443,6 @@ export const ALL_STATIC_PHRASES: Record<PhraseCategory, Record<TimeOfDay | 'anyt
   responses: RESPONSE_PHRASES,
   questions: QUESTION_PHRASES,
   family: FAMILY_PHRASES,
-  food: FOOD_PHRASES,
-  feelings: FEELINGS_PHRASES,
-  entertainment: ENTERTAINMENT_PHRASES,
 };
 
 /**

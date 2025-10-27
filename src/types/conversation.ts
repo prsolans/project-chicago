@@ -1,6 +1,6 @@
 export type SpeakerRole = 'user' | 'caregiver' | 'family' | 'medical' | 'other';
 
-export type MessageMethod = 'typed' | 'predicted' | 'quick_phrase' | 'thought_stream' | 'category';
+export type MessageMethod = 'typed' | 'predicted' | 'quick_phrase' | 'thought_stream' | 'category' | 'starter';
 
 export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'night';
 

@@ -306,6 +306,7 @@ function mapToInputMethod(method: MessageMethod): InputMethod {
     category: 'category',
     quick_phrase: 'quick_phrase',
     thought_stream: 'thought_stream',
+    starter: 'starter',
   };
   return methodMap[method] || 'typed';
 }

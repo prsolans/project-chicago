@@ -13,14 +13,14 @@ import { useThoughtCompletion } from './hooks/useThoughtCompletion';
 import { useDwellDetection } from './hooks/useDwellDetection';
 import { initializePhraseLibrary } from './store/phraseLibraryStore';
 import type { AIPrediction } from './types/conversation';
-import { Bot, MessageSquare, Star, ChevronUp, ChevronDown, Edit } from 'lucide-react';
+import { MessageSquare, Star, ChevronUp, ChevronDown, Edit } from 'lucide-react';
 
 function App() {
   const [showCategories, setShowCategories] = useState(false);
   const [activeTab, setActiveTab] = useState<'starters' | 'history' | 'message'>('starters');
   const [keyboardVisible, setKeyboardVisible] = useState(true);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
-  const { enableAI, setEnableAI, dwellTime } = useSettingsStore();
+  const { enableAI, dwellTime } = useSettingsStore();
   const { message, setMessage, sendMessage } = useMessageStore();
   const { speak } = useTextToSpeech();
 
@@ -29,7 +29,6 @@ function App() {
     predictions,
     isLoading: isPredictionsLoading,
     triggerPredictions,
-    clearPredictions,
   } = useThoughtCompletion({
     minCharacters: 0, // Allow predictions even for empty input (first word predictions)
     maxPredictions: 8,
