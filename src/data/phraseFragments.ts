@@ -77,6 +77,100 @@ export const verbFragments: PhraseFragment[] = [
 ];
 
 /**
+ * AUXILIARY VERBS - Helper verbs for tense, mood, voice
+ */
+export const auxiliaryFragments: PhraseFragment[] = [
+  // Do family
+  { id: 'aux_do', text: 'do', type: 'auxiliary', category: 'grammatical', commonality: 'very_common' },
+  { id: 'aux_does', text: 'does', type: 'auxiliary', category: 'grammatical', commonality: 'very_common' },
+  { id: 'aux_did', text: 'did', type: 'auxiliary', category: 'grammatical', commonality: 'common' },
+
+  // Will/Would/Shall/Should
+  { id: 'aux_will', text: 'will', type: 'auxiliary', category: 'grammatical', commonality: 'very_common' },
+  { id: 'aux_would', text: 'would', type: 'auxiliary', category: 'grammatical', commonality: 'very_common' },
+  { id: 'aux_shall', text: 'shall', type: 'auxiliary', category: 'grammatical', commonality: 'uncommon' },
+  { id: 'aux_should', text: 'should', type: 'auxiliary', category: 'grammatical', commonality: 'common' },
+
+  // Can/Could/May/Might/Must
+  { id: 'aux_can', text: 'can', type: 'auxiliary', category: 'grammatical', commonality: 'very_common' },
+  { id: 'aux_could', text: 'could', type: 'auxiliary', category: 'grammatical', commonality: 'very_common' },
+  { id: 'aux_may', text: 'may', type: 'auxiliary', category: 'grammatical', commonality: 'common' },
+  { id: 'aux_might', text: 'might', type: 'auxiliary', category: 'grammatical', commonality: 'common' },
+  { id: 'aux_must', text: 'must', type: 'auxiliary', category: 'grammatical', commonality: 'common' },
+
+  // Have family (perfect tenses)
+  { id: 'aux_have', text: 'have', type: 'auxiliary', category: 'grammatical', commonality: 'very_common' },
+  { id: 'aux_has', text: 'has', type: 'auxiliary', category: 'grammatical', commonality: 'very_common' },
+  { id: 'aux_had', text: 'had', type: 'auxiliary', category: 'grammatical', commonality: 'common' },
+
+  // Be family (progressive/passive)
+  { id: 'aux_am', text: 'am', type: 'auxiliary', category: 'grammatical', commonality: 'very_common' },
+  { id: 'aux_is', text: 'is', type: 'auxiliary', category: 'grammatical', commonality: 'very_common' },
+  { id: 'aux_are', text: 'are', type: 'auxiliary', category: 'grammatical', commonality: 'very_common' },
+  { id: 'aux_was', text: 'was', type: 'auxiliary', category: 'grammatical', commonality: 'common' },
+  { id: 'aux_were', text: 'were', type: 'auxiliary', category: 'grammatical', commonality: 'common' },
+  { id: 'aux_been', text: 'been', type: 'auxiliary', category: 'grammatical', commonality: 'common' },
+  { id: 'aux_being', text: 'being', type: 'auxiliary', category: 'grammatical', commonality: 'uncommon' },
+];
+
+/**
+ * NEGATIONS - Negative particles and contractions
+ */
+export const negationFragments: PhraseFragment[] = [
+  // Full forms
+  { id: 'neg_not', text: 'not', type: 'negation', category: 'grammatical', commonality: 'very_common' },
+  { id: 'neg_never', text: 'never', type: 'negation', category: 'grammatical', commonality: 'common' },
+
+  // Contracted forms - do
+  { id: 'neg_dont', text: "don't", type: 'negation', category: 'grammatical', commonality: 'very_common' },
+  { id: 'neg_doesnt', text: "doesn't", type: 'negation', category: 'grammatical', commonality: 'very_common' },
+  { id: 'neg_didnt', text: "didn't", type: 'negation', category: 'grammatical', commonality: 'common' },
+
+  // Contracted forms - will/would
+  { id: 'neg_wont', text: "won't", type: 'negation', category: 'grammatical', commonality: 'very_common' },
+  { id: 'neg_wouldnt', text: "wouldn't", type: 'negation', category: 'grammatical', commonality: 'common' },
+  { id: 'neg_shouldnt', text: "shouldn't", type: 'negation', category: 'grammatical', commonality: 'common' },
+
+  // Contracted forms - can/could
+  { id: 'neg_cant', text: "can't", type: 'negation', category: 'grammatical', commonality: 'very_common' },
+  { id: 'neg_couldnt', text: "couldn't", type: 'negation', category: 'grammatical', commonality: 'common' },
+
+  // Contracted forms - have/be
+  { id: 'neg_havent', text: "haven't", type: 'negation', category: 'grammatical', commonality: 'common' },
+  { id: 'neg_hasnt', text: "hasn't", type: 'negation', category: 'grammatical', commonality: 'common' },
+  { id: 'neg_hadnt', text: "hadn't", type: 'negation', category: 'grammatical', commonality: 'uncommon' },
+  { id: 'neg_isnt', text: "isn't", type: 'negation', category: 'grammatical', commonality: 'very_common' },
+  { id: 'neg_arent', text: "aren't", type: 'negation', category: 'grammatical', commonality: 'common' },
+  { id: 'neg_wasnt', text: "wasn't", type: 'negation', category: 'grammatical', commonality: 'common' },
+  { id: 'neg_werent', text: "weren't", type: 'negation', category: 'grammatical', commonality: 'uncommon' },
+
+  // Negative quantifiers
+  { id: 'neg_nothing', text: 'nothing', type: 'negation', category: 'grammatical', commonality: 'common' },
+  { id: 'neg_nobody', text: 'nobody', type: 'negation', category: 'grammatical', commonality: 'uncommon' },
+  { id: 'neg_nowhere', text: 'nowhere', type: 'negation', category: 'grammatical', commonality: 'uncommon' },
+  { id: 'neg_none', text: 'none', type: 'negation', category: 'grammatical', commonality: 'uncommon' },
+];
+
+/**
+ * INTERROGATIVES - Question words
+ */
+export const interrogativeFragments: PhraseFragment[] = [
+  { id: 'int_what', text: 'what', type: 'interrogative', category: 'grammatical', commonality: 'very_common' },
+  { id: 'int_why', text: 'why', type: 'interrogative', category: 'grammatical', commonality: 'very_common' },
+  { id: 'int_how', text: 'how', type: 'interrogative', category: 'grammatical', commonality: 'very_common' },
+  { id: 'int_when', text: 'when', type: 'interrogative', category: 'grammatical', commonality: 'very_common' },
+  { id: 'int_where', text: 'where', type: 'interrogative', category: 'grammatical', commonality: 'very_common' },
+  { id: 'int_who', text: 'who', type: 'interrogative', category: 'grammatical', commonality: 'very_common' },
+  { id: 'int_which', text: 'which', type: 'interrogative', category: 'grammatical', commonality: 'common' },
+  { id: 'int_whose', text: 'whose', type: 'interrogative', category: 'grammatical', commonality: 'uncommon' },
+
+  // Compound forms
+  { id: 'int_how_much', text: 'how much', type: 'interrogative', category: 'grammatical', commonality: 'common' },
+  { id: 'int_how_many', text: 'how many', type: 'interrogative', category: 'grammatical', commonality: 'common' },
+  { id: 'int_how_long', text: 'how long', type: 'interrogative', category: 'grammatical', commonality: 'common' },
+];
+
+/**
  * OBJECTS/TOPICS - What the action is directed toward
  */
 export const objectFragments: PhraseFragment[] = [
@@ -174,6 +268,18 @@ export const modifierFragments: PhraseFragment[] = [
   { id: 'm_tonight', text: 'tonight', type: 'modifier', category: 'temporal', commonality: 'common' },
   { id: 'm_soon', text: 'soon', type: 'modifier', category: 'temporal', commonality: 'common' },
   { id: 'm_later', text: 'later', type: 'modifier', category: 'temporal', commonality: 'common' },
+
+  // Enhanced modifiers for expressive precision
+  { id: 'm_actually', text: 'actually', type: 'modifier', category: 'intensity', commonality: 'very_common' },
+  { id: 'm_just', text: 'just', type: 'modifier', category: 'intensity', commonality: 'very_common' },
+  { id: 'm_only', text: 'only', type: 'modifier', category: 'intensity', commonality: 'common' },
+  { id: 'm_even', text: 'even', type: 'modifier', category: 'intensity', commonality: 'common' },
+  { id: 'm_also', text: 'also', type: 'modifier', category: 'personal', commonality: 'common' },
+  { id: 'm_too', text: 'too', type: 'modifier', category: 'intensity', commonality: 'common' },
+  { id: 'm_either', text: 'either', type: 'modifier', category: 'personal', commonality: 'uncommon' },
+  { id: 'm_neither', text: 'neither', type: 'modifier', category: 'personal', commonality: 'uncommon' },
+  { id: 'm_already', text: 'already', type: 'modifier', category: 'temporal', commonality: 'common' },
+  { id: 'm_yet', text: 'yet', type: 'modifier', category: 'temporal', commonality: 'common' },
 ];
 
 /**
@@ -237,6 +343,9 @@ export const connectorFragments: PhraseFragment[] = [
 export const allFragments: PhraseFragment[] = [
   ...subjectFragments,
   ...verbFragments,
+  ...auxiliaryFragments,
+  ...negationFragments,
+  ...interrogativeFragments,
   ...objectFragments,
   ...modifierFragments,
   ...emotionFragments,

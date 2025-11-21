@@ -9,13 +9,16 @@
  * The grammatical/semantic type of a fragment
  */
 export type FragmentType =
-  | 'subject'      // I, you, we, they, Michael, etc.
-  | 'verb'         // want to, need to, think, feel, etc.
-  | 'object'       // talk, eat, understand, etc.
-  | 'topic'        // meaning, purpose, death, freedom, etc.
-  | 'modifier'     // about, with, sometimes, deeply, etc.
-  | 'emotion'      // anxious, hopeful, conflicted, etc.
-  | 'connector';   // and, but, because, etc.
+  | 'subject'       // I, you, we, they, Michael, etc.
+  | 'verb'          // want to, need to, think, feel, etc.
+  | 'auxiliary'     // do, will, would, can, could, have, etc.
+  | 'negation'      // not, don't, won't, can't, never, etc.
+  | 'interrogative' // what, why, how, when, where, who, which
+  | 'object'        // talk, eat, understand, etc.
+  | 'topic'         // meaning, purpose, death, freedom, etc.
+  | 'modifier'      // about, with, sometimes, deeply, etc.
+  | 'emotion'       // anxious, hopeful, conflicted, etc.
+  | 'connector';    // and, but, because, etc.
 
 /**
  * Thematic category for organizing fragments
@@ -23,6 +26,7 @@ export type FragmentType =
 export type FragmentCategory =
   | 'personal'       // Personal pronouns, names
   | 'action'         // Actions, verbs
+  | 'grammatical'    // Grammar helpers (auxiliaries, negations, interrogatives)
   | 'philosophical'  // Abstract concepts, existential topics
   | 'emotional'      // Feelings, emotional states
   | 'social'         // Social interactions, relationships

@@ -165,6 +165,9 @@ export const PhraseBuilder: React.FC = () => {
     const labels: Record<FragmentType, string> = {
       subject: 'Who? (Subject)',
       verb: 'What? (Action/Feeling)',
+      auxiliary: 'Helper verb (will/can/do)',
+      negation: 'Negative (not/never/don\'t)',
+      interrogative: 'Question word (what/why/how)',
       object: 'About what? (Topic)',
       topic: 'About what? (Topic)',
       modifier: 'How? (Modifier)',
