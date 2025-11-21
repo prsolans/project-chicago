@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { MessageDisplay } from './components/MessageDisplay/MessageDisplay';
-import { Keyboard } from './components/Keyboard/Keyboard';
-import { ConversationPanel } from './components/ConversationPanel/ConversationPanel';
 import { CategoryPhrasesPanel } from './components/Categories/CategoryPhrasesPanel';
 import { StartersPanel } from './components/Starters/StartersPanel';
+import { PhraseBuilder } from './components/PhraseBuilder/PhraseBuilder';
 import { ThoughtCompletionBar } from './components/Predictions/ThoughtCompletionBar';
 import { AdminPanel } from './components/Admin/AdminPanel';
+import { SimpleStoryMode } from './components/Stories/SimpleStoryMode';
 import { useSettingsStore } from './store/settingsStore';
 import { useMessageStore } from './store/messageStore';
 import { useTextToSpeech } from './hooks/useTextToSpeech';
@@ -13,13 +13,13 @@ import { useThoughtCompletion } from './hooks/useThoughtCompletion';
 import { useDwellDetection } from './hooks/useDwellDetection';
 import { initializePhraseLibrary } from './store/phraseLibraryStore';
 import type { AIPrediction } from './types/conversation';
-import { MessageSquare, Star, ChevronUp, ChevronDown, Edit } from 'lucide-react';
+import { Star, Edit, Blocks, BookOpen } from 'lucide-react';
 
 function App() {
   const [showCategories, setShowCategories] = useState(false);
-  const [activeTab, setActiveTab] = useState<'starters' | 'history' | 'message'>('starters');
-  const [keyboardVisible, setKeyboardVisible] = useState(true);
+  const [activeTab, setActiveTab] = useState<'type' | 'build' | 'quick' | 'ask'>('quick');
   const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [isViewingPhrases, setIsViewingPhrases] = useState(false);
   const { enableAI, dwellTime } = useSettingsStore();
   const { message, setMessage, sendMessage } = useMessageStore();
   const { speak } = useTextToSpeech();
@@ -41,10 +41,10 @@ function App() {
     triggerPredictions(message);
   }, [message, triggerPredictions]);
 
-  // Auto-switch to message tab when user types on keyboard
+  // Auto-switch to type tab when user types on keyboard
   useEffect(() => {
-    if (message.length > 0 && activeTab !== 'message') {
-      setActiveTab('message');
+    if (message.length > 0 && activeTab !== 'type') {
+      setActiveTab('type');
     }
   }, [message, activeTab]);
 
@@ -107,22 +107,22 @@ function App() {
   };
 
   // Dwell detection for tabs
-  const startersTab = useDwellDetection(dwellTime, () => setActiveTab('starters'));
-  const historyTab = useDwellDetection(dwellTime, () => setActiveTab('history'));
-  const messageTab = useDwellDetection(dwellTime, () => setActiveTab('message'));
-
-  // Dwell detection for keyboard drawer toggle
-  const keyboardToggle = useDwellDetection(dwellTime, () => setKeyboardVisible(!keyboardVisible));
+  const typeTab = useDwellDetection(dwellTime, () => setActiveTab('type'));
+  const buildTab = useDwellDetection(dwellTime, () => setActiveTab('build'));
+  const quickTab = useDwellDetection(dwellTime, () => setActiveTab('quick'));
+  const askTab = useDwellDetection(dwellTime, () => setActiveTab('ask'));
 
   return (
     <div className="h-screen bg-slate-900 flex flex-col overflow-hidden">
-      {/* Header */}
-      <header className="flex items-center justify-center px-8 py-6 border-b border-slate-700/50 bg-slate-900/95">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-white tracking-tight">HelloFriend</h1>
-          <p className="text-base text-slate-400 mt-1 font-light">Look. Dwell. Communicate.</p>
-        </div>
-      </header>
+      {/* Header - Smaller overall, hidden completely on phrase pages */}
+      {!(activeTab === 'quick' && isViewingPhrases) && (
+        <header className="flex items-center justify-center px-6 py-3 border-b border-slate-700/50 bg-slate-900/95">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-white tracking-tight">HelloFriend</h1>
+            <p className="text-sm text-slate-400 mt-0.5 font-light">Look. Dwell. Communicate.</p>
+          </div>
+        </header>
+      )}
 
       {/* Main Content Area - Full Width Tabbed */}
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -133,102 +133,109 @@ function App() {
             {/* Tab Buttons */}
             <div className="flex border-b border-slate-700/50 flex-shrink-0">
               <button
-                onMouseEnter={startersTab.handleMouseEnter}
-                onMouseLeave={startersTab.handleMouseLeave}
+                onMouseEnter={typeTab.handleMouseEnter}
+                onMouseLeave={typeTab.handleMouseLeave}
                 className={`
                   relative flex-1 flex items-center justify-center gap-2 px-6 py-4
                   transition-colors cursor-pointer
-                  ${activeTab === 'starters'
+                  ${activeTab === 'type'
                     ? 'bg-blue-600 text-white'
                     : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-300'
                   }
                 `}
               >
-                {startersTab.progress > 0 && activeTab !== 'starters' && (
+                {typeTab.progress > 0 && activeTab !== 'type' && (
                   <div
                     className="absolute inset-0 border-4 border-yellow-400 pointer-events-none"
                     style={{
-                      background: `conic-gradient(#facc15 ${startersTab.progress}%, transparent ${startersTab.progress}%)`,
-                      opacity: 0.3,
-                    }}
-                  />
-                )}
-                <Star className="w-5 h-5 relative z-10" />
-                <span className="text-base font-semibold relative z-10">Starters</span>
-              </button>
-
-              <button
-                onMouseEnter={historyTab.handleMouseEnter}
-                onMouseLeave={historyTab.handleMouseLeave}
-                className={`
-                  relative flex-1 flex items-center justify-center gap-2 px-6 py-4
-                  transition-colors cursor-pointer
-                  ${activeTab === 'history'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-300'
-                  }
-                `}
-              >
-                {historyTab.progress > 0 && activeTab !== 'history' && (
-                  <div
-                    className="absolute inset-0 border-4 border-yellow-400 pointer-events-none"
-                    style={{
-                      background: `conic-gradient(#facc15 ${historyTab.progress}%, transparent ${historyTab.progress}%)`,
-                      opacity: 0.3,
-                    }}
-                  />
-                )}
-                <MessageSquare className="w-5 h-5 relative z-10" />
-                <span className="text-base font-semibold relative z-10">History</span>
-              </button>
-
-              <button
-                onMouseEnter={messageTab.handleMouseEnter}
-                onMouseLeave={messageTab.handleMouseLeave}
-                className={`
-                  relative flex-1 flex items-center justify-center gap-2 px-6 py-4
-                  transition-colors cursor-pointer
-                  ${activeTab === 'message'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-300'
-                  }
-                `}
-              >
-                {messageTab.progress > 0 && activeTab !== 'message' && (
-                  <div
-                    className="absolute inset-0 border-4 border-yellow-400 pointer-events-none"
-                    style={{
-                      background: `conic-gradient(#facc15 ${messageTab.progress}%, transparent ${messageTab.progress}%)`,
+                      background: `conic-gradient(#facc15 ${typeTab.progress}%, transparent ${typeTab.progress}%)`,
                       opacity: 0.3,
                     }}
                   />
                 )}
                 <Edit className="w-5 h-5 relative z-10" />
-                <span className="text-base font-semibold relative z-10">Message</span>
+                <span className="text-base font-semibold relative z-10">Type</span>
+              </button>
+
+              <button
+                onMouseEnter={buildTab.handleMouseEnter}
+                onMouseLeave={buildTab.handleMouseLeave}
+                className={`
+                  relative flex-1 flex items-center justify-center gap-2 px-6 py-4
+                  transition-colors cursor-pointer
+                  ${activeTab === 'build'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-300'
+                  }
+                `}
+              >
+                {buildTab.progress > 0 && activeTab !== 'build' && (
+                  <div
+                    className="absolute inset-0 border-4 border-yellow-400 pointer-events-none"
+                    style={{
+                      background: `conic-gradient(#facc15 ${buildTab.progress}%, transparent ${buildTab.progress}%)`,
+                      opacity: 0.3,
+                    }}
+                  />
+                )}
+                <Blocks className="w-5 h-5 relative z-10" />
+                <span className="text-base font-semibold relative z-10">Build</span>
+              </button>
+
+              <button
+                onMouseEnter={quickTab.handleMouseEnter}
+                onMouseLeave={quickTab.handleMouseLeave}
+                className={`
+                  relative flex-1 flex items-center justify-center gap-2 px-6 py-4
+                  transition-colors cursor-pointer
+                  ${activeTab === 'quick'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-300'
+                  }
+                `}
+              >
+                {quickTab.progress > 0 && activeTab !== 'quick' && (
+                  <div
+                    className="absolute inset-0 border-4 border-yellow-400 pointer-events-none"
+                    style={{
+                      background: `conic-gradient(#facc15 ${quickTab.progress}%, transparent ${quickTab.progress}%)`,
+                      opacity: 0.3,
+                    }}
+                  />
+                )}
+                <Star className="w-5 h-5 relative z-10" />
+                <span className="text-base font-semibold relative z-10">Quick</span>
+              </button>
+
+              <button
+                onMouseEnter={askTab.handleMouseEnter}
+                onMouseLeave={askTab.handleMouseLeave}
+                className={`
+                  relative flex-1 flex items-center justify-center gap-2 px-6 py-4
+                  transition-colors cursor-pointer
+                  ${activeTab === 'ask'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-300'
+                  }
+                `}
+              >
+                {askTab.progress > 0 && activeTab !== 'ask' && (
+                  <div
+                    className="absolute inset-0 border-4 border-yellow-400 pointer-events-none"
+                    style={{
+                      background: `conic-gradient(#facc15 ${askTab.progress}%, transparent ${askTab.progress}%)`,
+                      opacity: 0.3,
+                    }}
+                  />
+                )}
+                <BookOpen className="w-5 h-5 relative z-10" />
+                <span className="text-base font-semibold relative z-10">Stories</span>
               </button>
             </div>
 
             {/* Tab Content */}
             <div className="flex-1 overflow-hidden">
-              {activeTab === 'starters' && (
-                <div className="p-6 h-full overflow-y-auto">
-                  <StartersPanel />
-                </div>
-              )}
-
-              {activeTab === 'history' && (
-                <div className="flex flex-col h-full">
-                  <div className="flex items-center gap-3 px-8 pt-6 pb-4 flex-shrink-0">
-                    <MessageSquare className="w-6 h-6 text-blue-400" />
-                    <h2 className="text-white text-xl font-semibold">Your Messages</h2>
-                  </div>
-                  <div className="flex-1 overflow-y-auto px-8 pb-8">
-                    <ConversationPanel maxHeight="none" />
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'message' && (
+              {activeTab === 'type' && (
                 <div className="p-8 flex flex-col gap-8 h-full overflow-y-auto">
                   {/* AI Predictions */}
                   {(predictions.length > 0 || isPredictionsLoading) && (
@@ -240,67 +247,36 @@ function App() {
                   )}
 
                   {/* Message Display */}
-                  <div className="flex-1 flex items-center justify-center">
+                  <div className="flex-1 flex flex-col items-center justify-center gap-4">
                     <div className="w-full max-w-4xl">
                       <MessageDisplay />
                     </div>
+                    <p className="text-slate-500 text-sm">Use your Tobii system keyboard to type</p>
                   </div>
+                </div>
+              )}
 
-                  {/* Action Buttons - Space/Delete/Clear/Speak */}
-                  <div className="flex justify-center gap-4 pb-4">
-                    <Keyboard.ActionButtons />
-                  </div>
+              {activeTab === 'build' && (
+                <div className="h-full">
+                  <PhraseBuilder />
+                </div>
+              )}
+
+              {activeTab === 'quick' && (
+                <div className="px-6 py-3 h-full overflow-y-auto">
+                  <StartersPanel onCategoryChange={(hasCategory) => setIsViewingPhrases(hasCategory)} />
+                </div>
+              )}
+
+              {activeTab === 'ask' && (
+                <div className="h-full">
+                  <SimpleStoryMode />
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* Bottom Section: Keyboard Drawer (Full Width) */}
-        {keyboardVisible ? (
-          <div className="border-t border-slate-700/50 flex-shrink-0 h-[270px] flex flex-col mb-6">
-            {/* Keyboard Toggle Bar */}
-            <button
-              onMouseEnter={keyboardToggle.handleMouseEnter}
-              onMouseLeave={keyboardToggle.handleMouseLeave}
-              className="relative w-full bg-slate-800 hover:bg-slate-700 py-2 flex items-center justify-center gap-2 text-slate-300 hover:text-white transition-colors cursor-pointer border-b border-slate-700/50"
-            >
-              {keyboardToggle.progress > 0 && (
-                <div
-                  className="absolute inset-0 border-4 border-yellow-400 pointer-events-none"
-                  style={{
-                    background: `conic-gradient(#facc15 ${keyboardToggle.progress}%, transparent ${keyboardToggle.progress}%)`,
-                    opacity: 0.3,
-                  }}
-                />
-              )}
-              <ChevronDown className="w-5 h-5 relative z-10" />
-              <span className="text-sm font-medium relative z-10">Hide Keyboard</span>
-            </button>
-            <Keyboard />
-          </div>
-        ) : (
-          <div className="border-t border-slate-700/50 flex-shrink-0 mb-6">
-            {/* Collapsed Keyboard Drawer */}
-            <button
-              onMouseEnter={keyboardToggle.handleMouseEnter}
-              onMouseLeave={keyboardToggle.handleMouseLeave}
-              className="relative w-full bg-slate-800 hover:bg-slate-700 py-4 flex items-center justify-center gap-2 text-slate-300 hover:text-white transition-colors cursor-pointer"
-            >
-              {keyboardToggle.progress > 0 && (
-                <div
-                  className="absolute inset-0 border-4 border-yellow-400 pointer-events-none"
-                  style={{
-                    background: `conic-gradient(#facc15 ${keyboardToggle.progress}%, transparent ${keyboardToggle.progress}%)`,
-                    opacity: 0.3,
-                  }}
-                />
-              )}
-              <ChevronUp className="w-5 h-5 relative z-10" />
-              <span className="text-base font-medium relative z-10">Show Keyboard</span>
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Full Screen Category Phrases Overlay */}

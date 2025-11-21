@@ -221,6 +221,7 @@ export const usePhraseLibrary = create<PhraseLibraryState>()(
           food: 0,
           feelings: 0,
           entertainment: 0,
+          ideas: 0,
         };
 
         phrases.forEach(p => {

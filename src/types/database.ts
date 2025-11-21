@@ -3,11 +3,12 @@
  * Auto-generated from supabase/migrations/001_initial_schema.sql
  */
 
-export type PhraseCategory = 'family' | 'medical' | 'comfort' | 'social' | 'responses' | 'questions' | 'food' | 'feelings' | 'entertainment';
+export type PhraseCategory = 'family' | 'medical' | 'comfort' | 'social' | 'responses' | 'questions' | 'food' | 'feelings' | 'entertainment' | 'ideas';
 export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'anytime';
 export type PhraseSource = 'static' | 'ai_generated' | 'user_typed' | 'user_custom';
 export type InputMethod = 'typed' | 'predicted' | 'category' | 'quick_phrase' | 'starter' | 'thought_stream';
 export type CandidateStatus = 'pending' | 'approved' | 'rejected';
+
 
 // Database row types
 export interface Phrase {
@@ -50,6 +51,19 @@ export interface ConversationHistory {
   timestamp: string;
 }
 
+// Simple Story type (just stores text)
+export interface Story {
+  id: string;
+  title: string;
+  content: string;  // Full story text
+  description: string | null;
+  category: string | null;
+  created_at: string;
+  updated_at: string;
+  last_used_at: string | null;
+  usage_count: number;
+}
+
 // View types
 export interface PhraseStats {
   id: string;
@@ -78,10 +92,12 @@ export type PhraseInsert = Omit<Phrase, 'id' | 'created_at' | 'updated_at'>;
 export type PhraseUsageInsert = Omit<PhraseUsage, 'id' | 'used_at'>;
 export type PhraseCandidateInsert = Omit<PhraseCandidate, 'id' | 'created_at' | 'updated_at' | 'first_seen' | 'last_used'>;
 export type ConversationHistoryInsert = Omit<ConversationHistory, 'id' | 'timestamp'>;
+export type StoryInsert = Omit<Story, 'id' | 'created_at' | 'updated_at' | 'last_used_at' | 'usage_count'>;
 
 // Update types (all fields optional except id)
 export type PhraseUpdate = Partial<Omit<Phrase, 'id' | 'created_at' | 'updated_at'>>;
 export type PhraseCandidateUpdate = Partial<Omit<PhraseCandidate, 'id' | 'created_at' | 'updated_at'>>;
+export type StoryUpdate = Partial<Omit<Story, 'id' | 'created_at' | 'updated_at'>>;
 
 // Database schema type for Supabase client
 export interface Database {
@@ -107,6 +123,11 @@ export interface Database {
         Insert: ConversationHistoryInsert;
         Update: never;
       };
+      stories: {
+        Row: Story;
+        Insert: StoryInsert;
+        Update: StoryUpdate;
+      };
     };
     Views: {
       phrase_stats: {
@@ -131,6 +152,10 @@ export interface Database {
       promote_candidate_to_phrase: {
         Args: { p_candidate_id: string; p_category: PhraseCategory; p_time_of_day?: TimeOfDay };
         Returns: string;
+      };
+      track_story_usage: {
+        Args: { p_story_id: string };
+        Returns: void;
       };
     };
   };

@@ -6,7 +6,7 @@
 import type { AIPrediction } from '../types/conversation';
 
 export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'anytime';
-export type PhraseCategory = 'medical' | 'comfort' | 'social' | 'responses' | 'questions' | 'family' | 'food' | 'feelings' | 'entertainment';
+export type PhraseCategory = 'medical' | 'comfort' | 'social' | 'responses' | 'questions' | 'family' | 'food' | 'feelings' | 'entertainment' | 'ideas';
 
 interface StaticPhrase {
   content: string;
@@ -302,6 +302,29 @@ const QUESTION_PHRASES: Record<TimeOfDay | 'anytime', StaticPhrase[]> = {
     { content: 'How much longer?', confidence: 0.75 },
     { content: 'Are we done yet?', confidence: 0.7 },
     { content: 'What\'s next?', confidence: 0.75 },
+    // Deeper/philosophical questions
+    { content: 'What do you think happens after death?', confidence: 0.7 },
+    { content: 'Do you believe in heaven?', confidence: 0.7 },
+    { content: 'What do you think my legacy will be?', confidence: 0.7 },
+    { content: 'How do you want to remember me?', confidence: 0.75 },
+    { content: 'What have I taught you?', confidence: 0.75 },
+    { content: 'Do you think I\'m still the same person?', confidence: 0.7 },
+    { content: 'What gives your life meaning?', confidence: 0.7 },
+    { content: 'Are you afraid of death?', confidence: 0.65 },
+    { content: 'What do you hope for?', confidence: 0.75 },
+    { content: 'Do you think I\'ve lived a good life?', confidence: 0.7 },
+    { content: 'What would you do in my situation?', confidence: 0.7 },
+    { content: 'How do you cope with this?', confidence: 0.75 },
+    { content: 'Do you think about the future?', confidence: 0.7 },
+    { content: 'What are you most afraid of?', confidence: 0.7 },
+    { content: 'What makes you happy?', confidence: 0.8 },
+    { content: 'Do you have regrets?', confidence: 0.7 },
+    { content: 'What would you change if you could?', confidence: 0.7 },
+    { content: 'Am I a burden?', confidence: 0.75 },
+    { content: 'Do you resent this situation?', confidence: 0.65 },
+    { content: 'Are you taking care of yourself?', confidence: 0.8 },
+    { content: 'What do you need?', confidence: 0.8 },
+    { content: 'How are you really doing?', confidence: 0.8 },
   ],
 };
 
@@ -513,6 +536,93 @@ const FEELINGS_PHRASES: Record<TimeOfDay | 'anytime', StaticPhrase[]> = {
     { content: 'I just need a moment', confidence: 0.75 },
     { content: 'I\'m okay', confidence: 0.85 },
     { content: 'I\'m not okay', confidence: 0.85 },
+    // Complex/deep emotions
+    { content: 'I feel conflicted', confidence: 0.75 },
+    { content: 'I\'m feeling hopeful', confidence: 0.8 },
+    { content: 'I feel numb', confidence: 0.75 },
+    { content: 'I\'m feeling invisible', confidence: 0.7 },
+    { content: 'I feel seen and heard', confidence: 0.75 },
+    { content: 'I\'m feeling trapped', confidence: 0.75 },
+    { content: 'I feel surprisingly free', confidence: 0.7 },
+    { content: 'I\'m grieving', confidence: 0.75 },
+    { content: 'I feel nostalgic', confidence: 0.75 },
+    { content: 'I\'m feeling tender', confidence: 0.7 },
+    { content: 'I feel raw', confidence: 0.7 },
+    { content: 'I\'m feeling vulnerable', confidence: 0.75 },
+    { content: 'I feel resilient', confidence: 0.75 },
+    { content: 'I\'m amazed I\'m still here', confidence: 0.75 },
+    { content: 'I feel like a burden', confidence: 0.75 },
+    { content: 'I feel loved despite everything', confidence: 0.8 },
+    { content: 'I\'m afraid of being forgotten', confidence: 0.75 },
+    { content: 'I feel at peace sometimes', confidence: 0.8 },
+    { content: 'I\'m struggling to accept this', confidence: 0.8 },
+    { content: 'I feel guilty about needing help', confidence: 0.75 },
+    { content: 'I\'m surprisingly content right now', confidence: 0.75 },
+    { content: 'I feel disconnected from myself', confidence: 0.7 },
+    { content: 'I\'m more myself than ever', confidence: 0.7 },
+    { content: 'I feel bittersweet', confidence: 0.75 },
+    { content: 'I\'m experiencing mixed emotions', confidence: 0.75 },
+  ],
+};
+
+/**
+ * Ideas/Observations phrases - thoughts about the world, observations, reflections
+ */
+const IDEAS_PHRASES: Record<TimeOfDay | 'anytime', StaticPhrase[]> = {
+  morning: [
+    { content: 'I have an idea', confidence: 0.8, timeAware: true },
+    { content: 'I was thinking overnight', confidence: 0.75, timeAware: true },
+  ],
+  afternoon: [
+    { content: 'I\'ve been observing something', confidence: 0.75, timeAware: true },
+  ],
+  evening: [
+    { content: 'I had a thought today', confidence: 0.75, timeAware: true },
+  ],
+  anytime: [
+    { content: 'I have something to say', confidence: 0.85 },
+    { content: 'I\'ve been thinking about something', confidence: 0.8 },
+    { content: 'I want to share a thought', confidence: 0.8 },
+    { content: 'I noticed something interesting', confidence: 0.75 },
+    { content: 'Can I share an observation?', confidence: 0.75 },
+    { content: 'I have a perspective on this', confidence: 0.75 },
+    { content: 'I see things differently now', confidence: 0.75 },
+    { content: 'I\'ve learned something', confidence: 0.8 },
+    { content: 'This experience has taught me', confidence: 0.8 },
+    { content: 'I want to talk about ideas', confidence: 0.75 },
+    { content: 'What do you think about this?', confidence: 0.8 },
+    { content: 'I wonder what would happen if', confidence: 0.75 },
+    { content: 'Have you considered this?', confidence: 0.75 },
+    { content: 'I see patterns in things', confidence: 0.7 },
+    { content: 'I\'ve noticed how people behave', confidence: 0.7 },
+    { content: 'The world is interesting', confidence: 0.75 },
+    { content: 'I still think deeply', confidence: 0.75 },
+    { content: 'My mind is still sharp', confidence: 0.8 },
+    { content: 'I have insights to share', confidence: 0.75 },
+    { content: 'I want to discuss this topic', confidence: 0.75 },
+    { content: 'Let\'s talk about something meaningful', confidence: 0.8 },
+    { content: 'I\'m curious about your thoughts', confidence: 0.8 },
+    { content: 'What\'s your opinion on this?', confidence: 0.8 },
+    { content: 'I disagree with that', confidence: 0.75 },
+    { content: 'That\'s an interesting perspective', confidence: 0.8 },
+    { content: 'I never thought of it that way', confidence: 0.75 },
+    { content: 'You\'ve changed my mind', confidence: 0.75 },
+    { content: 'I want to challenge that idea', confidence: 0.7 },
+    { content: 'Let me play devil\'s advocate', confidence: 0.7 },
+    { content: 'What if we looked at it differently?', confidence: 0.75 },
+    { content: 'I see both sides', confidence: 0.75 },
+    { content: 'This is complex', confidence: 0.75 },
+    { content: 'There\'s nuance here', confidence: 0.7 },
+    { content: 'I think we need to consider', confidence: 0.75 },
+    { content: 'What are the implications?', confidence: 0.7 },
+    { content: 'I\'m thinking critically about this', confidence: 0.75 },
+    { content: 'Let\'s explore this together', confidence: 0.8 },
+    { content: 'I want to understand better', confidence: 0.8 },
+    { content: 'Explain that to me', confidence: 0.8 },
+    { content: 'Tell me more about your thinking', confidence: 0.75 },
+    { content: 'That\'s fascinating', confidence: 0.8 },
+    { content: 'I hadn\'t considered that', confidence: 0.75 },
+    { content: 'You make a good point', confidence: 0.8 },
   ],
 };
 
@@ -590,6 +700,7 @@ export const ALL_STATIC_PHRASES: Record<PhraseCategory, Record<TimeOfDay | 'anyt
   food: FOOD_PHRASES,
   feelings: FEELINGS_PHRASES,
   entertainment: ENTERTAINMENT_PHRASES,
+  ideas: IDEAS_PHRASES,
 };
 
 /**

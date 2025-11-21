@@ -11,6 +11,8 @@ export interface TTSOptions {
   text: string;
   stability?: number;  // 0-1, default 0.5
   similarityBoost?: number;  // 0-1, default 0.75
+  style?: number;  // 0-1, exaggeration of the style
+  useSpeakerBoost?: boolean;  // whether to use speaker boost
 }
 
 export interface TTSError {
@@ -25,7 +27,14 @@ export interface TTSError {
  * @throws Error if API call fails or API key is missing
  */
 export async function textToSpeech(options: TTSOptions): Promise<Blob> {
-  const { voiceId, text, stability = 0.5, similarityBoost = 0.75 } = options;
+  const {
+    voiceId,
+    text,
+    stability = 0.5,
+    similarityBoost = 0.75,
+    style,
+    useSpeakerBoost,
+  } = options;
 
   // Check if API key is configured
   if (!ELEVENLABS_API_KEY || ELEVENLABS_API_KEY === 'your_elevenlabs_api_key_here') {
@@ -33,6 +42,19 @@ export async function textToSpeech(options: TTSOptions): Promise<Blob> {
   }
 
   try {
+    const voiceSettings: Record<string, any> = {
+      stability,
+      similarity_boost: similarityBoost,
+    };
+
+    // Add optional settings if provided
+    if (style !== undefined) {
+      voiceSettings.style = style;
+    }
+    if (useSpeakerBoost !== undefined) {
+      voiceSettings.use_speaker_boost = useSpeakerBoost;
+    }
+
     const response = await fetch(`${ELEVENLABS_API_URL}/${voiceId}`, {
       method: 'POST',
       headers: {
@@ -43,10 +65,7 @@ export async function textToSpeech(options: TTSOptions): Promise<Blob> {
       body: JSON.stringify({
         text,
         model_id: 'eleven_monolingual_v1',
-        voice_settings: {
-          stability,
-          similarity_boost: similarityBoost,
-        },
+        voice_settings: voiceSettings,
       }),
     });
 

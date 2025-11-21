@@ -14,7 +14,9 @@ import {
   HelpCircle,
   UtensilsCrossed,
   Smile,
-  Tv
+  Tv,
+  Lightbulb,
+  ArrowLeft
 } from 'lucide-react';
 
 const CATEGORIES = [
@@ -27,13 +29,15 @@ const CATEGORIES = [
   { id: 'food' as PhraseCategory, label: 'Food & Drink', icon: UtensilsCrossed, color: 'from-amber-600 to-amber-700' },
   { id: 'feelings' as PhraseCategory, label: 'Feelings', icon: Smile, color: 'from-pink-600 to-pink-700' },
   { id: 'entertainment' as PhraseCategory, label: 'Entertainment', icon: Tv, color: 'from-indigo-600 to-indigo-700' },
+  { id: 'ideas' as PhraseCategory, label: 'Ideas', icon: Lightbulb, color: 'from-teal-600 to-teal-700' },
 ] as const;
 
 interface StartersPanelProps {
   className?: string;
+  onCategoryChange?: (hasCategory: boolean) => void;
 }
 
-export const StartersPanel = ({ className = '' }: StartersPanelProps) => {
+export const StartersPanel = ({ className = '', onCategoryChange }: StartersPanelProps) => {
   const [selectedCategory, setSelectedCategory] = useState<PhraseCategory | null>(null);
   const [phrases, setPhrases] = useState<Phrase[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -42,6 +46,11 @@ export const StartersPanel = ({ className = '' }: StartersPanelProps) => {
   const { setMessage, sendMessage } = useMessageStore();
   const { speak } = useTextToSpeech();
   const { getPhrasesByCategory, trackUsage } = usePhraseLibrary();
+
+  // Notify parent when category selection changes
+  useEffect(() => {
+    onCategoryChange?.(selectedCategory !== null);
+  }, [selectedCategory, onCategoryChange]);
 
   // Load phrases when category is selected
   useEffect(() => {
@@ -89,25 +98,20 @@ export const StartersPanel = ({ className = '' }: StartersPanelProps) => {
 
   return (
     <div className={`h-full flex flex-col ${className}`}>
-      {/* Category Navigation Icons */}
-      <div className="flex-shrink-0 px-4 py-4 border-b border-slate-700/50 bg-slate-800/50">
-        <div className="flex gap-2 justify-center">
-          {CATEGORIES.map(category => (
-            <CategoryIconButton
-              key={category.id}
-              icon={category.icon}
-              color={category.color}
-              label={category.label}
-              isActive={category.id === selectedCategory}
-              onSelect={() => handleCategorySelect(category.id)}
-              dwellTime={dwellTime}
-            />
-          ))}
+      {/* Back Button and Category Header */}
+      <div className="flex-shrink-0 px-4 py-2 border-b border-slate-700/50 bg-slate-800/50 flex items-center gap-4">
+        <BackButton
+          onBack={() => setSelectedCategory(null)}
+          dwellTime={dwellTime}
+        />
+        <div className="flex items-center gap-2 flex-1 justify-center">
+          <currentCategory.icon className="w-6 h-6" />
+          <h2 className="text-xl font-semibold">{currentCategory.label}</h2>
         </div>
       </div>
 
       {/* Phrases Grid */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto px-6 py-3">
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
             <p className="text-slate-400 text-lg">Loading phrases...</p>
@@ -117,7 +121,7 @@ export const StartersPanel = ({ className = '' }: StartersPanelProps) => {
             <p className="text-slate-400 text-lg">No phrases available</p>
           </div>
         ) : (
-          <div className="grid grid-cols-5 gap-3">
+          <div className="grid grid-cols-6 gap-2">
             {phrases.map(phrase => (
               <PhraseButton
                 key={phrase.id}
@@ -182,49 +186,27 @@ const CategoryButton = ({ label, icon: Icon, color, onSelect, dwellTime }: Categ
 };
 
 /**
- * Category Icon Button Component (Level 2 - Quick Navigation)
+ * Back Button Component
  */
-interface CategoryIconButtonProps {
-  icon: React.ComponentType<{ className?: string }>;
-  color: string;
-  label: string;
-  isActive: boolean;
-  onSelect: () => void;
+interface BackButtonProps {
+  onBack: () => void;
   dwellTime: number;
 }
 
-const CategoryIconButton = ({
-  icon: Icon,
-  color,
-  label,
-  isActive,
-  onSelect,
-  dwellTime
-}: CategoryIconButtonProps) => {
+const BackButton = ({ onBack, dwellTime }: BackButtonProps) => {
   const { progress, handleMouseEnter, handleMouseLeave } = useDwellDetection(
     dwellTime,
-    onSelect
+    onBack
   );
 
   return (
     <button
-      className={`
-        relative w-14 h-14 rounded-lg
-        bg-gradient-to-br ${color}
-        ${isActive ? 'ring-4 ring-yellow-400 ring-offset-2 ring-offset-slate-900' : ''}
-        hover:brightness-110
-        text-white
-        transition-all duration-200
-        cursor-pointer
-        shadow-md hover:shadow-lg
-        flex items-center justify-center
-      `}
+      className="relative flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white transition-all cursor-pointer"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      onClick={onSelect}
-      title={label}
+      onClick={onBack}
     >
-      {progress > 0 && !isActive && (
+      {progress > 0 && (
         <div
           className="absolute inset-0 rounded-lg border-4 border-yellow-400 pointer-events-none"
           style={{
@@ -233,8 +215,8 @@ const CategoryIconButton = ({
           }}
         />
       )}
-
-      <Icon className="w-6 h-6 relative z-10" />
+      <ArrowLeft className="w-5 h-5 relative z-10" />
+      <span className="text-sm font-medium relative z-10">Back</span>
     </button>
   );
 };
@@ -258,10 +240,10 @@ const PhraseButton = ({ text, color, onSelect, dwellTime }: PhraseButtonProps) =
   return (
     <button
       className={`
-        relative w-full min-h-[80px] px-4 py-3 rounded-xl
+        relative w-full min-h-[100px] px-4 py-4 rounded-xl
         bg-gradient-to-br ${color}
         hover:brightness-110
-        text-white text-left text-base font-semibold
+        text-white text-left text-sm font-semibold
         transition-all duration-200
         cursor-pointer
         shadow-md hover:shadow-lg
