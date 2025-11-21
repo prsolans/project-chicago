@@ -237,6 +237,16 @@ const RESPONSE_PHRASES: Record<TimeOfDay | 'anytime', StaticPhrase[]> = {
     { content: 'Absolutely not', confidence: 0.8 },
     { content: 'Never mind', confidence: 0.75 },
     { content: 'Forget it', confidence: 0.7 },
+
+    // Quick conversational responses
+    { content: 'No ma\'am', confidence: 0.9 },
+    { content: 'Mmmhmm', confidence: 0.95 },
+    { content: 'Uh huh', confidence: 0.95 },
+    { content: 'K', confidence: 0.9 },
+    { content: 'Stop talking', confidence: 0.85 },
+    { content: 'Tell me more', confidence: 0.85 },
+    { content: 'Say that in a different way', confidence: 0.8 },
+    { content: 'What do you think I\'m going to say', confidence: 0.75 },
   ],
 };
 
