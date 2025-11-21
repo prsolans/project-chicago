@@ -24,13 +24,12 @@ export type FragmentType =
  * Thematic category for organizing fragments
  */
 export type FragmentCategory =
-  | 'personal'       // Personal pronouns, names
-  | 'action'         // Actions, verbs
+  | 'personal'       // Personal pronouns, names, basic needs
+  | 'action'         // Actions, verbs, mental activities
   | 'grammatical'    // Grammar helpers (auxiliaries, negations, interrogatives)
-  | 'philosophical'  // Abstract concepts, existential topics
   | 'emotional'      // Feelings, emotional states
   | 'social'         // Social interactions, relationships
-  | 'temporal'       // Time-related modifiers
+  | 'temporal'       // Time-related modifiers and references
   | 'intensity';     // Degree/intensity modifiers
 
 /**

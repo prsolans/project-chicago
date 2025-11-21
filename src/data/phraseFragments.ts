@@ -26,12 +26,10 @@ export const subjectFragments: PhraseFragment[] = [
   { id: 's_kids', text: 'the kids', type: 'subject', category: 'personal', commonality: 'common' },
   { id: 's_family', text: 'my family', type: 'subject', category: 'personal', commonality: 'common' },
 
-  // Abstract/philosophical subjects
-  { id: 's_life', text: 'life', type: 'subject', category: 'philosophical', commonality: 'common' },
-  { id: 's_world', text: 'the world', type: 'subject', category: 'philosophical', commonality: 'common' },
-  { id: 's_people', text: 'people', type: 'subject', category: 'philosophical', commonality: 'common' },
-  { id: 's_death', text: 'death', type: 'subject', category: 'philosophical', commonality: 'uncommon' },
-  { id: 's_time', text: 'time', type: 'subject', category: 'philosophical', commonality: 'uncommon' },
+  // Common general subjects
+  { id: 's_life', text: 'life', type: 'subject', category: 'personal', commonality: 'common' },
+  { id: 's_world', text: 'the world', type: 'subject', category: 'personal', commonality: 'common' },
+  { id: 's_people', text: 'people', type: 'subject', category: 'social', commonality: 'common' },
   { id: 's_love', text: 'love', type: 'subject', category: 'emotional', commonality: 'common' },
   { id: 's_this', text: 'this', type: 'subject', category: 'personal', commonality: 'very_common' },
 ];
@@ -51,8 +49,8 @@ export const verbFragments: PhraseFragment[] = [
   // Mental/emotional verbs
   { id: 'v_think', text: 'think', type: 'verb', category: 'action', commonality: 'very_common' },
   { id: 'v_feel', text: 'feel', type: 'verb', category: 'emotional', commonality: 'very_common' },
-  { id: 'v_believe', text: 'believe', type: 'verb', category: 'philosophical', commonality: 'common' },
-  { id: 'v_wonder', text: 'wonder', type: 'verb', category: 'philosophical', commonality: 'common' },
+  { id: 'v_believe', text: 'believe', type: 'verb', category: 'action', commonality: 'common' },
+  { id: 'v_wonder', text: 'wonder', type: 'verb', category: 'action', commonality: 'common' },
   { id: 'v_hope', text: 'hope', type: 'verb', category: 'emotional', commonality: 'common' },
   { id: 'v_fear', text: 'fear', type: 'verb', category: 'emotional', commonality: 'common' },
   { id: 'v_worry', text: 'worry', type: 'verb', category: 'emotional', commonality: 'common' },
@@ -61,9 +59,8 @@ export const verbFragments: PhraseFragment[] = [
   { id: 'v_miss', text: 'miss', type: 'verb', category: 'emotional', commonality: 'common' },
   { id: 'v_appreciate', text: 'appreciate', type: 'verb', category: 'emotional', commonality: 'common' },
   { id: 'v_grateful', text: 'am grateful for', type: 'verb', category: 'emotional', commonality: 'common' },
-  { id: 'v_understand', text: 'understand', type: 'verb', category: 'philosophical', commonality: 'common' },
-  { id: 'v_question', text: 'question', type: 'verb', category: 'philosophical', commonality: 'common' },
-  { id: 'v_doubt', text: 'doubt', type: 'verb', category: 'philosophical', commonality: 'uncommon' },
+  { id: 'v_understand', text: 'understand', type: 'verb', category: 'action', commonality: 'common' },
+  { id: 'v_question', text: 'question', type: 'verb', category: 'action', commonality: 'common' },
   { id: 'v_struggle', text: 'struggle with', type: 'verb', category: 'emotional', commonality: 'common' },
   { id: 'v_remember', text: 'remember', type: 'verb', category: 'personal', commonality: 'common' },
   { id: 'v_forget', text: 'forget', type: 'verb', category: 'personal', commonality: 'uncommon' },
@@ -189,19 +186,7 @@ export const objectFragments: PhraseFragment[] = [
   { id: 'o_sleep', text: 'sleep', type: 'object', category: 'personal', commonality: 'common' },
   { id: 'o_rest', text: 'rest', type: 'object', category: 'personal', commonality: 'common' },
 
-  // Philosophical/abstract topics
-  { id: 'o_meaning', text: 'meaning', type: 'object', category: 'philosophical', commonality: 'uncommon' },
-  { id: 'o_purpose', text: 'purpose', type: 'object', category: 'philosophical', commonality: 'uncommon' },
-  { id: 'o_existence', text: 'existence', type: 'object', category: 'philosophical', commonality: 'specialized' },
-  { id: 'o_mortality', text: 'mortality', type: 'object', category: 'philosophical', commonality: 'specialized' },
-  { id: 'o_death', text: 'death', type: 'object', category: 'philosophical', commonality: 'uncommon' },
-  { id: 'o_dying', text: 'dying', type: 'object', category: 'philosophical', commonality: 'uncommon' },
-  { id: 'o_legacy', text: 'legacy', type: 'object', category: 'philosophical', commonality: 'uncommon' },
-  { id: 'o_identity', text: 'identity', type: 'object', category: 'philosophical', commonality: 'specialized' },
-  { id: 'o_consciousness', text: 'consciousness', type: 'object', category: 'philosophical', commonality: 'specialized' },
-  { id: 'o_freedom', text: 'freedom', type: 'object', category: 'philosophical', commonality: 'uncommon' },
-  { id: 'o_choice', text: 'choice', type: 'object', category: 'philosophical', commonality: 'uncommon' },
-  { id: 'o_suffering', text: 'suffering', type: 'object', category: 'philosophical', commonality: 'uncommon' },
+  // Emotions and states
   { id: 'o_joy', text: 'joy', type: 'object', category: 'emotional', commonality: 'common' },
   { id: 'o_pain', text: 'pain', type: 'object', category: 'emotional', commonality: 'common' },
   { id: 'o_hope', text: 'hope', type: 'object', category: 'emotional', commonality: 'common' },
@@ -214,11 +199,10 @@ export const objectFragments: PhraseFragment[] = [
   { id: 'o_love', text: 'love', type: 'object', category: 'emotional', commonality: 'common' },
   { id: 'o_loss', text: 'loss', type: 'object', category: 'emotional', commonality: 'uncommon' },
 
-  // Time and change
-  { id: 'o_future', text: 'the future', type: 'object', category: 'philosophical', commonality: 'common' },
-  { id: 'o_past', text: 'the past', type: 'object', category: 'philosophical', commonality: 'common' },
-  { id: 'o_time', text: 'time', type: 'object', category: 'philosophical', commonality: 'common' },
-  { id: 'o_change', text: 'change', type: 'object', category: 'philosophical', commonality: 'common' },
+  // Time references
+  { id: 'o_future', text: 'the future', type: 'object', category: 'temporal', commonality: 'common' },
+  { id: 'o_past', text: 'the past', type: 'object', category: 'temporal', commonality: 'common' },
+  { id: 'o_time', text: 'time', type: 'object', category: 'temporal', commonality: 'common' },
   { id: 'o_memories', text: 'memories', type: 'object', category: 'personal', commonality: 'common' },
 
   // Current experience

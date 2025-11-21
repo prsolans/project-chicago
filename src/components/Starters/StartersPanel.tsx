@@ -41,11 +41,19 @@ export const StartersPanel = ({ className = '', onCategoryChange }: StartersPane
   const [selectedCategory, setSelectedCategory] = useState<PhraseCategory | null>(null);
   const [phrases, setPhrases] = useState<Phrase[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
 
   const { dwellTime } = useSettingsStore();
   const { setMessage, sendMessage } = useMessageStore();
   const { speak } = useTextToSpeech();
   const { getPhrasesByCategory, trackUsage } = usePhraseLibrary();
+
+  // Pagination
+  const ITEMS_PER_PAGE = 30;
+  const totalPages = Math.ceil(phrases.length / ITEMS_PER_PAGE);
+  const startIndex = currentPage * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentPhrases = phrases.slice(startIndex, endIndex);
 
   // Notify parent when category selection changes
   useEffect(() => {
@@ -56,6 +64,7 @@ export const StartersPanel = ({ className = '', onCategoryChange }: StartersPane
   useEffect(() => {
     if (selectedCategory) {
       setIsLoading(true);
+      setCurrentPage(0); // Reset to first page
       getPhrasesByCategory(selectedCategory, true) // true = smart sort with time-awareness
         .then(setPhrases)
         .finally(() => setIsLoading(false));
@@ -64,6 +73,18 @@ export const StartersPanel = ({ className = '', onCategoryChange }: StartersPane
 
   const handleCategorySelect = (categoryId: PhraseCategory) => {
     setSelectedCategory(categoryId);
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages - 1) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 0) {
+      setCurrentPage(currentPage - 1);
+    }
   };
 
   const handlePhraseSelect = (phrase: Phrase) => {
@@ -122,7 +143,7 @@ export const StartersPanel = ({ className = '', onCategoryChange }: StartersPane
           </div>
         ) : (
           <div className="grid grid-cols-6 gap-2">
-            {phrases.map(phrase => (
+            {currentPhrases.map(phrase => (
               <PhraseButton
                 key={phrase.id}
                 text={phrase.text}
@@ -134,6 +155,27 @@ export const StartersPanel = ({ className = '', onCategoryChange }: StartersPane
           </div>
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex-shrink-0 px-6 py-3 border-t border-slate-700/50 bg-slate-800/50 flex items-center justify-center gap-4">
+          <PaginationButton
+            label="Previous"
+            onClick={handlePreviousPage}
+            disabled={currentPage === 0}
+            dwellTime={dwellTime}
+          />
+          <span className="text-slate-300 text-sm font-medium">
+            Page {currentPage + 1} of {totalPages} ({phrases.length} phrases)
+          </span>
+          <PaginationButton
+            label="Next"
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages - 1}
+            dwellTime={dwellTime}
+          />
+        </div>
+      )}
     </div>
   );
 };
@@ -264,6 +306,49 @@ const PhraseButton = ({ text, color, onSelect, dwellTime }: PhraseButtonProps) =
       )}
 
       <span className="relative z-10 text-center leading-snug">{text}</span>
+    </button>
+  );
+};
+
+/**
+ * Pagination Button Component
+ */
+interface PaginationButtonProps {
+  label: string;
+  onClick: () => void;
+  disabled: boolean;
+  dwellTime: number;
+}
+
+const PaginationButton = ({ label, onClick, disabled, dwellTime }: PaginationButtonProps) => {
+  const { progress, handleMouseEnter, handleMouseLeave } = useDwellDetection(
+    dwellTime,
+    onClick,
+    !disabled
+  );
+
+  return (
+    <button
+      className={`relative px-6 py-3 rounded-lg font-medium transition-all ${
+        disabled
+          ? 'bg-slate-700/50 text-slate-500 cursor-not-allowed'
+          : 'bg-blue-600 hover:bg-blue-500 text-white cursor-pointer'
+      }`}
+      onMouseEnter={disabled ? undefined : handleMouseEnter}
+      onMouseLeave={disabled ? undefined : handleMouseLeave}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
+    >
+      {progress > 0 && !disabled && (
+        <div
+          className="absolute inset-0 rounded-lg border-4 border-yellow-400 pointer-events-none"
+          style={{
+            background: `conic-gradient(#facc15 ${progress}%, transparent ${progress}%)`,
+            opacity: 0.3,
+          }}
+        />
+      )}
+      <span className="relative z-10">{label}</span>
     </button>
   );
 };

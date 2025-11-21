@@ -258,7 +258,7 @@ export function getCurrentTimeOfDay(): TimeOfDay {
  */
 export async function getSmartPhrasesForCategory(
   category: PhraseCategory,
-  limit: number = 20
+  limit?: number
 ): Promise<Phrase[]> {
   const timeOfDay = getCurrentTimeOfDay();
 
@@ -266,7 +266,7 @@ export async function getSmartPhrasesForCategory(
   const phrases = await getPhrasesByCategoryAndTime(category, timeOfDay);
 
   // Get top phrases for this category
-  const topPhrases = await getTopPhrasesByCategory(category, limit);
+  const topPhrases = await getTopPhrasesByCategory(category, 100);
   const topPhraseIds = new Set(topPhrases.map(p => p.id));
 
   // Sort: top phrases first, then alphabetically
@@ -279,5 +279,6 @@ export async function getSmartPhrasesForCategory(
     return a.text.localeCompare(b.text);
   });
 
-  return phrases.slice(0, limit);
+  // Return all phrases if no limit specified, otherwise slice
+  return limit ? phrases.slice(0, limit) : phrases;
 }

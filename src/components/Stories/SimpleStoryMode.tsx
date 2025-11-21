@@ -352,7 +352,7 @@ const StoryEditor = ({ storyId, onBack, onPlay }: StoryEditorProps) => {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex-shrink-0 px-6 py-4 border-b border-slate-700/50 flex items-center gap-4">
+      <div className="flex-shrink-0 px-6 py-5 border-b border-slate-700/50 flex items-center gap-4">
         <DwellButton icon={ArrowLeft} label="Back" onClick={onBack} dwellTime={dwellTime} color="bg-slate-700 hover:bg-slate-600" />
         <h2 className="text-2xl font-bold text-white">{story ? 'Edit Story' : 'New Story'}</h2>
       </div>
@@ -520,7 +520,7 @@ const StoryPlayback = ({ storyId, onBack }: StoryPlaybackProps) => {
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="flex-shrink-0 px-6 py-4 border-b border-slate-700/50 flex items-center gap-4">
+      <div className="flex-shrink-0 px-6 py-5 border-b border-slate-700/50 flex items-center gap-4">
         <DwellButton icon={ArrowLeft} label="Back" onClick={onBack} dwellTime={dwellTime} color="bg-slate-700 hover:bg-slate-600" />
         <div>
           <h2 className="text-2xl font-bold text-white">{story.title}</h2>
@@ -546,7 +546,7 @@ const StoryPlayback = ({ storyId, onBack }: StoryPlaybackProps) => {
 
           {/* Current Line */}
           <div className="bg-slate-800 rounded-2xl p-12 border-2 border-slate-700">
-            <p className="text-white text-3xl leading-relaxed text-center">
+            <p className="text-white text-lg leading-relaxed text-center">
               {parsedLine?.displayText || currentLine}
             </p>
           </div>
@@ -586,17 +586,13 @@ const StoryPlayback = ({ storyId, onBack }: StoryPlaybackProps) => {
         {/* Line Navigator */}
         <div className="flex flex-wrap gap-2 justify-center">
           {lines.map((_, idx) => (
-            <button
+            <LineNumberButton
               key={idx}
+              number={idx + 1}
+              isActive={idx === currentLineIndex}
               onClick={() => jumpToLine(idx)}
-              className={`px-3 py-2 rounded text-sm font-medium transition-all ${
-                idx === currentLineIndex
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-              }`}
-            >
-              {idx + 1}
-            </button>
+              dwellTime={dwellTime}
+            />
           ))}
         </div>
       </div>
@@ -622,7 +618,7 @@ const DwellButton = ({ icon: Icon, label, onClick, dwellTime, color, disabled = 
 
   return (
     <button
-      className={`relative flex items-center gap-2 px-6 py-3 rounded-lg text-white font-semibold transition-all cursor-pointer ${
+      className={`relative flex items-center gap-3 px-8 py-6 rounded-lg text-white font-semibold text-lg transition-all cursor-pointer ${
         disabled ? 'opacity-50 cursor-not-allowed' : color
       } ${className}`}
       onMouseEnter={disabled ? undefined : handleMouseEnter}
@@ -639,8 +635,46 @@ const DwellButton = ({ icon: Icon, label, onClick, dwellTime, color, disabled = 
           }}
         />
       )}
-      <Icon className="w-5 h-5 relative z-10" />
+      <Icon className="w-7 h-7 relative z-10" />
       <span className="relative z-10">{label}</span>
+    </button>
+  );
+};
+
+/**
+ * Line Number Button with Dwell Detection
+ */
+interface LineNumberButtonProps {
+  number: number;
+  isActive: boolean;
+  onClick: () => void;
+  dwellTime: number;
+}
+
+const LineNumberButton = ({ number, isActive, onClick, dwellTime }: LineNumberButtonProps) => {
+  const { progress, handleMouseEnter, handleMouseLeave } = useDwellDetection(dwellTime, onClick);
+
+  return (
+    <button
+      className={`relative px-4 py-3 rounded text-base font-medium transition-all cursor-pointer ${
+        isActive
+          ? 'bg-blue-600 text-white'
+          : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+      }`}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onClick={onClick}
+    >
+      {progress > 0 && !isActive && (
+        <div
+          className="absolute inset-0 rounded border-4 border-yellow-400 pointer-events-none"
+          style={{
+            background: `conic-gradient(#facc15 ${progress}%, transparent ${progress}%)`,
+            opacity: 0.3,
+          }}
+        />
+      )}
+      <span className="relative z-10">{number}</span>
     </button>
   );
 };
