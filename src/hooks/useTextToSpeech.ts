@@ -4,6 +4,39 @@ import { useSettingsStore } from '../store/settingsStore';
 import type { EmotionSettings } from '../utils/emotionTags';
 import { getVoiceSettingsForEmotion, prepareTextForElevenLabs, prepareTextForWebSpeech } from '../utils/emotionTags';
 
+// Track if audio has been unlocked by user interaction
+let audioUnlocked = false;
+
+// Unlock audio context on first user interaction
+const unlockAudio = () => {
+  if (audioUnlocked) return;
+
+  // Create and play a silent audio to unlock
+  const silentAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA');
+  silentAudio.play().then(() => {
+    audioUnlocked = true;
+    console.log('TTS: Audio unlocked by user interaction');
+  }).catch(() => {
+    // Ignore errors - will try again on next interaction
+  });
+
+  // Also unlock Web Speech API
+  if (window.speechSynthesis) {
+    const utterance = new SpeechSynthesisUtterance('');
+    window.speechSynthesis.speak(utterance);
+    window.speechSynthesis.cancel();
+  }
+};
+
+// Add global click listener to unlock audio
+if (typeof window !== 'undefined') {
+  const handleFirstInteraction = () => {
+    unlockAudio();
+  };
+  document.addEventListener('click', handleFirstInteraction, { once: false });
+  document.addEventListener('touchstart', handleFirstInteraction, { once: false });
+}
+
 interface SpeakOptions {
   emotionSettings?: EmotionSettings;
 }
@@ -164,26 +197,33 @@ export const useTextToSpeech = (): UseTextToSpeechReturn => {
 
     // Don't speak empty text
     if (!text || text.trim() === '') {
+      console.error('TTS: No text to speak');
       setError('No text to speak');
       return;
     }
 
+    console.log('TTS: Starting speak', { text, elevenLabsConfigured: isElevenLabsConfigured() });
     setIsLoading(true);
     setError(null);
 
     try {
       // Try ElevenLabs first if configured
       if (isElevenLabsConfigured()) {
+        console.log('TTS: Using ElevenLabs');
         await speakWithElevenLabs(text, options);
       } else {
         // Fall back to Web Speech API
+        console.log('TTS: Using Web Speech API (ElevenLabs not configured)');
         await speakWithWebSpeech(text, options);
       }
     } catch (err) {
+      console.error('TTS: Primary method failed', err);
       // If ElevenLabs fails, try Web Speech API as fallback
       try {
+        console.log('TTS: Falling back to Web Speech API');
         await speakWithWebSpeech(text, options);
       } catch (fallbackErr) {
+        console.error('TTS: Fallback also failed', fallbackErr);
         const errorMessage = fallbackErr instanceof Error
           ? fallbackErr.message
           : 'Unknown error occurred';

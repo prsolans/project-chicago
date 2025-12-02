@@ -47,7 +47,7 @@ export async function generateThoughtCompletions(
     const prompt = buildPredictionPrompt(request.context, request.maxPredictions || 6);
 
     const message = await client.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 1024,
       messages: [{
         role: 'user',
@@ -168,7 +168,7 @@ export async function generateCategoryPredictions(
     const prompt = buildCategoryPrompt(context, categories);
 
     const message = await client.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 4096,
       messages: [{
         role: 'user',
@@ -270,7 +270,7 @@ export async function* streamPredictions(
     const prompt = buildPredictionPrompt(context, 4);
 
     const stream = await client.messages.stream({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 1024,
       messages: [{
         role: 'user',
@@ -311,7 +311,7 @@ export async function summarizeConversation(messages: Message[], participants: P
     }).join('\n');
 
     const message = await client.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 256,
       messages: [{
         role: 'user',

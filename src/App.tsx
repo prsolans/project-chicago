@@ -20,6 +20,10 @@ function App() {
   const [activeTab, setActiveTab] = useState<'type' | 'build' | 'quick' | 'ask'>('quick');
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [isViewingPhrases, setIsViewingPhrases] = useState(false);
+  const [audioUnlocked, setAudioUnlocked] = useState(() => {
+    // Check if already unlocked this session
+    return sessionStorage.getItem('audioUnlocked') === 'true';
+  });
   const { enableAI, dwellTime } = useSettingsStore();
   const { message, setMessage, sendMessage } = useMessageStore();
   const { speak } = useTextToSpeech();
@@ -65,6 +69,23 @@ function App() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  // Handle unlocking audio (required for browser autoplay policy)
+  const handleUnlockAudio = () => {
+    // Play silent audio to unlock audio context
+    const silentAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA');
+    silentAudio.play().catch(() => {});
+
+    // Also unlock Web Speech API
+    if (window.speechSynthesis) {
+      const utterance = new SpeechSynthesisUtterance('');
+      window.speechSynthesis.speak(utterance);
+      window.speechSynthesis.cancel();
+    }
+
+    sessionStorage.setItem('audioUnlocked', 'true');
+    setAudioUnlocked(true);
+  };
 
   /**
    * Handle AI prediction selection
@@ -291,6 +312,25 @@ function App() {
       {/* Admin Panel (Ctrl+Shift+A) */}
       {showAdminPanel && (
         <AdminPanel onClose={() => setShowAdminPanel(false)} />
+      )}
+
+      {/* Audio Unlock Overlay - Required for browser autoplay policy */}
+      {!audioUnlocked && (
+        <div
+          className="fixed inset-0 bg-slate-900/95 z-50 flex items-center justify-center cursor-pointer"
+          onClick={handleUnlockAudio}
+        >
+          <div className="text-center p-12 max-w-lg">
+            <div className="text-6xl mb-6">👋</div>
+            <h2 className="text-4xl font-bold text-white mb-4">Welcome to HelloFriend</h2>
+            <p className="text-xl text-slate-300 mb-8">
+              Tap anywhere to enable voice
+            </p>
+            <div className="inline-block bg-blue-600 text-white text-2xl font-semibold px-8 py-4 rounded-xl">
+              Tap to Begin
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

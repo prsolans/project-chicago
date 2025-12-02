@@ -18,7 +18,46 @@ export type FragmentType =
   | 'topic'         // meaning, purpose, death, freedom, etc.
   | 'modifier'      // about, with, sometimes, deeply, etc.
   | 'emotion'       // anxious, hopeful, conflicted, etc.
-  | 'connector';    // and, but, because, etc.
+  | 'connector'     // and, but, because, etc.
+  | 'emotionTag';   // [excited], [sad], [laughs], etc. - TTS modifiers
+
+/**
+ * Semantic categories for intuitive navigation
+ * Groups grammatical types by communication function
+ */
+export type SemanticCategory =
+  | 'WHO'   // subjects - who is speaking/being discussed
+  | 'DO'    // verbs + auxiliaries - actions and states
+  | 'FEEL'  // emotions - feelings and emotional states
+  | 'WHAT'  // objects + topics - things being discussed
+  | 'HOW'   // modifiers + interrogatives - context, manner, questions
+  | 'LINK'  // connectors + negations - linking and negating
+  | 'VOICE'; // emotion tags - TTS voice modifiers
+
+/**
+ * Maps semantic categories to their underlying fragment types
+ */
+export const SEMANTIC_CATEGORY_MAP: Record<SemanticCategory, FragmentType[]> = {
+  WHO: ['subject'],
+  DO: ['verb', 'auxiliary'],
+  FEEL: ['emotion'],
+  WHAT: ['object', 'topic'],
+  HOW: ['modifier', 'interrogative'],
+  LINK: ['connector', 'negation'],
+  VOICE: ['emotionTag'],
+};
+
+/**
+ * Get the semantic category for a fragment type
+ */
+export function getSemanticCategory(type: FragmentType): SemanticCategory {
+  for (const [category, types] of Object.entries(SEMANTIC_CATEGORY_MAP)) {
+    if (types.includes(type)) {
+      return category as SemanticCategory;
+    }
+  }
+  return 'WHAT'; // fallback
+}
 
 /**
  * Thematic category for organizing fragments
@@ -30,7 +69,10 @@ export type FragmentCategory =
   | 'emotional'      // Feelings, emotional states
   | 'social'         // Social interactions, relationships
   | 'temporal'       // Time-related modifiers and references
-  | 'intensity';     // Degree/intensity modifiers
+  | 'intensity'      // Degree/intensity modifiers
+  | 'tts_emotion'    // TTS emotion tags ([excited], [sad], etc.)
+  | 'tts_effect'     // TTS effect tags ([laughs], [sighs], etc.)
+  | 'tts_pacing';    // TTS pacing tags ([fast], [slow])
 
 /**
  * How commonly a fragment is used (for UI prioritization)

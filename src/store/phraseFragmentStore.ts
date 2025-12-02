@@ -16,12 +16,17 @@ import type {
   FragmentSelection,
   FragmentType,
   FragmentSuggestion,
+  SemanticCategory,
 } from '../types/phraseFragments';
+import { getSemanticCategory, SEMANTIC_CATEGORY_MAP } from '../types/phraseFragments';
 import { allFragments } from '../data/phraseFragments';
 
 interface PhraseFragmentState {
   // Current fragment selection during building
   currentSelection: FragmentSelection;
+
+  // Active semantic category for navigation
+  activeCategory: SemanticCategory;
 
   // Saved built phrases
   builtPhrases: BuiltPhrase[];
@@ -44,6 +49,10 @@ interface PhraseFragmentState {
   clearSelection: () => void;
   setCurrentSelection: (selection: FragmentSelection) => void;
 
+  // Actions: Semantic Category Navigation
+  setActiveCategory: (category: SemanticCategory) => void;
+  getSuggestedCategory: () => SemanticCategory;
+
   // Actions: Built Phrases
   saveBuiltPhrase: (phrase?: Partial<BuiltPhrase>) => void;
   deleteBuiltPhrase: (id: string) => void;
@@ -62,12 +71,14 @@ interface PhraseFragmentState {
   // Getters
   getAllFragments: () => PhraseFragment[];
   getFragmentsByType: (type: FragmentType) => PhraseFragment[];
+  getFragmentsBySemanticCategory: (category: SemanticCategory) => PhraseFragment[];
   getSuggestedFragments: (currentType: FragmentType | null) => FragmentSuggestion[];
   getPreviewText: () => string;
 }
 
 /**
  * Generate preview text from current fragment selection
+ * Note: No automatic punctuation - user controls when sentence is complete
  */
 const generatePreviewText = (fragments: PhraseFragment[]): string => {
   if (fragments.length === 0) return '';
@@ -77,13 +88,6 @@ const generatePreviewText = (fragments: PhraseFragment[]): string => {
 
   // Capitalize first letter
   text = text.charAt(0).toUpperCase() + text.slice(1);
-
-  // Add period if it looks complete (has subject and verb)
-  const hasSubject = fragments.some(f => f.type === 'subject');
-  const hasVerb = fragments.some(f => f.type === 'verb');
-  if (hasSubject && hasVerb && !text.endsWith('.') && !text.endsWith('?') && !text.endsWith('!')) {
-    text += '.';
-  }
 
   return text;
 };
@@ -115,6 +119,29 @@ const getNextFragmentType = (fragments: PhraseFragment[]): FragmentType | null =
   return null; // Complete
 };
 
+/**
+ * Get suggested semantic category based on current fragments
+ * Follows natural English SVO patterns as a visual hint only
+ */
+const computeSuggestedCategory = (fragments: PhraseFragment[]): SemanticCategory => {
+  if (fragments.length === 0) return 'WHO'; // Start with subject
+
+  const lastFragment = fragments[fragments.length - 1];
+  const lastCategory = getSemanticCategory(lastFragment.type);
+
+  // Common SVO pattern suggestions
+  switch (lastCategory) {
+    case 'WHO': return 'DO';      // Subject → Verb
+    case 'DO': return 'WHAT';     // Verb → Object
+    case 'FEEL': return 'HOW';    // Emotion → Modifier (about what)
+    case 'WHAT': return 'LINK';   // Object → Connector (to continue)
+    case 'HOW': return 'WHAT';    // Modifier → Object
+    case 'LINK': return 'WHO';    // Connector → New subject
+    case 'VOICE': return 'WHO';   // Emotion tag → Subject
+    default: return 'DO';
+  }
+};
+
 export const usePhraseFragmentStore = create<PhraseFragmentState>()(
   persist(
     (set, get) => ({
@@ -125,6 +152,7 @@ export const usePhraseFragmentStore = create<PhraseFragmentState>()(
         previewText: '',
         isComplete: false,
       },
+      activeCategory: 'WHO',
       builtPhrases: [],
       customFragments: [],
       recentFragmentIds: [],
@@ -186,11 +214,22 @@ export const usePhraseFragmentStore = create<PhraseFragmentState>()(
             previewText: '',
             isComplete: false,
           },
+          activeCategory: 'WHO',
         });
       },
 
       setCurrentSelection: (selection: FragmentSelection) => {
         set({ currentSelection: selection });
+      },
+
+      // Semantic Category Navigation Actions
+      setActiveCategory: (category: SemanticCategory) => {
+        set({ activeCategory: category });
+      },
+
+      getSuggestedCategory: () => {
+        const state = get();
+        return computeSuggestedCategory(state.currentSelection.fragments);
       },
 
       // Built Phrases Actions
@@ -314,6 +353,30 @@ export const usePhraseFragmentStore = create<PhraseFragmentState>()(
           // Then by commonality
           const commonalityOrder = { very_common: 0, common: 1, uncommon: 2, specialized: 3 };
           return commonalityOrder[a.commonality] - commonalityOrder[b.commonality];
+        });
+
+        return fragments;
+      },
+
+      getFragmentsBySemanticCategory: (category: SemanticCategory) => {
+        const allFrags = get().getAllFragments();
+        const state = get();
+        const types = SEMANTIC_CATEGORY_MAP[category];
+
+        // Filter by types in this semantic category
+        let fragments = allFrags.filter(f => types.includes(f.type));
+
+        // Sort: very_common first, then by usage count
+        fragments.sort((a, b) => {
+          // Commonality first (core vocabulary emphasis)
+          const commonalityOrder = { very_common: 0, common: 1, uncommon: 2, specialized: 3 };
+          const commonalityDiff = commonalityOrder[a.commonality] - commonalityOrder[b.commonality];
+          if (commonalityDiff !== 0) return commonalityDiff;
+
+          // Then by usage count (personalization)
+          const aCount = state.usageCounts[a.id] || 0;
+          const bCount = state.usageCounts[b.id] || 0;
+          return bCount - aCount;
         });
 
         return fragments;
