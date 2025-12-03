@@ -77,6 +77,51 @@ const CategoryTab: React.FC<CategoryTabProps> = ({
   );
 };
 
+// Punctuation button for adding expression (!, ?)
+interface PunctuationButtonProps {
+  punctuation: string;
+  color: string;
+  onSelect: () => void;
+  dwellTime: number;
+}
+
+const PunctuationButton: React.FC<PunctuationButtonProps> = ({
+  punctuation,
+  color,
+  onSelect,
+  dwellTime,
+}) => {
+  const { progress, handleMouseEnter, handleMouseLeave } = useDwellDetection(
+    dwellTime,
+    onSelect
+  );
+
+  return (
+    <button
+      className={`
+        relative ${color} text-white rounded-lg px-4 py-3
+        font-bold text-2xl min-h-[56px] min-w-[56px] transition-all
+        hover:opacity-90
+      `}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <span className="relative z-10">{punctuation}</span>
+
+      {/* Dwell progress indicator */}
+      {progress > 0 && (
+        <div
+          className="absolute inset-0 rounded-lg border-4 border-yellow-400"
+          style={{
+            background: `conic-gradient(#facc15 ${progress}%, transparent ${progress}%)`,
+            opacity: 0.3,
+          }}
+        />
+      )}
+    </button>
+  );
+};
+
 // Suggestion button for quick picks and AI completions
 interface SuggestionButtonProps {
   text: string;
@@ -156,8 +201,8 @@ const FragmentButton: React.FC<FragmentButtonProps> = ({ fragment, onSelect, dwe
   return (
     <button
       className={`
-        relative bg-blue-600 text-white rounded-lg px-4 py-3
-        font-medium text-lg min-h-[60px] transition-all
+        relative bg-blue-600 text-white rounded-lg px-4 py-4
+        font-medium text-lg min-h-[72px] transition-all
         hover:bg-blue-500 ${getOpacity()}
       `}
       onMouseEnter={handleMouseEnter}
@@ -179,6 +224,9 @@ const FragmentButton: React.FC<FragmentButtonProps> = ({ fragment, onSelect, dwe
   );
 };
 
+
+// Pagination constants
+const ITEMS_PER_PAGE = 12;
 
 export const PhraseBuilder: React.FC = () => {
   const { dwellTime, enableAI } = useSettingsStore();
@@ -213,6 +261,12 @@ export const PhraseBuilder: React.FC = () => {
   });
 
   const [showSaved, setShowSaved] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+
+  // Reset page when category changes
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [activeCategory]);
 
   const suggestedCategory = getSuggestedCategory();
 
@@ -279,6 +333,13 @@ export const PhraseBuilder: React.FC = () => {
   // Get fragments for the active semantic category
   const availableFragments = getFragmentsBySemanticCategory(activeCategory);
 
+  // Pagination calculations
+  const totalPages = Math.ceil(availableFragments.length / ITEMS_PER_PAGE);
+  const paginatedFragments = availableFragments.slice(
+    currentPage * ITEMS_PER_PAGE,
+    (currentPage + 1) * ITEMS_PER_PAGE
+  );
+
   const handleSpeak = () => {
     console.log('handleSpeak called', {
       previewText: currentSelection.previewText,
@@ -310,8 +371,21 @@ export const PhraseBuilder: React.FC = () => {
     removeLastFragment();
   };
 
+  const handlePunctuation = (punctuation: string) => {
+    const currentText = currentSelection.previewText;
+    if (!currentText) return;
+
+    // Replace trailing punctuation, or add punctuation
+    const newText = currentText.replace(/[.!?]$/, '') + punctuation;
+
+    setCurrentSelection({
+      ...currentSelection,
+      previewText: newText,
+    });
+  };
+
   return (
-    <div className="flex flex-col h-full bg-slate-900 p-4 space-y-4">
+    <div className="flex flex-col h-full bg-slate-900 space-y-4">
       {/* Preview Area - Compact */}
       <div className="bg-slate-800 rounded-lg p-4 border-2 border-slate-700">
         <div className="flex items-center justify-between gap-4">
@@ -402,7 +476,7 @@ export const PhraseBuilder: React.FC = () => {
       )}
 
 
-      {/* Semantic Category Tabs */}
+      {/* Semantic Category Tabs + Punctuation */}
       <div className="flex gap-2 overflow-x-auto pb-2">
         {CATEGORY_CONFIG.map(({ category, label, color }) => (
           <CategoryTab
@@ -416,21 +490,58 @@ export const PhraseBuilder: React.FC = () => {
             dwellTime={dwellTime}
           />
         ))}
+
+        {/* Punctuation buttons for expression */}
+        <PunctuationButton
+          punctuation="!"
+          color="bg-amber-600"
+          onSelect={() => handlePunctuation('!')}
+          dwellTime={dwellTime}
+        />
+        <PunctuationButton
+          punctuation="?"
+          color="bg-sky-600"
+          onSelect={() => handlePunctuation('?')}
+          dwellTime={dwellTime}
+        />
       </div>
 
-      {/* Fragment Selection Grid */}
-      <div className="flex-1 overflow-y-auto pb-4">
+      {/* Fragment Selection Grid - Fixed 4 columns, paginated */}
+      <div className="flex-1 flex flex-col">
         {availableFragments.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-            {availableFragments.map((fragment) => (
-              <FragmentButton
-                key={fragment.id}
-                fragment={fragment}
-                onSelect={() => handleSelectFragment(fragment)}
-                dwellTime={dwellTime}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-4 gap-3">
+              {paginatedFragments.map((fragment) => (
+                <FragmentButton
+                  key={fragment.id}
+                  fragment={fragment}
+                  onSelect={() => handleSelectFragment(fragment)}
+                  dwellTime={dwellTime}
+                />
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-slate-700">
+                <PaginationButton
+                  label="◀ Prev"
+                  onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                  disabled={currentPage === 0}
+                  dwellTime={dwellTime}
+                />
+                <span className="text-slate-400 text-lg font-medium min-w-[120px] text-center">
+                  Page {currentPage + 1} of {totalPages}
+                </span>
+                <PaginationButton
+                  label="Next ▶"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+                  disabled={currentPage >= totalPages - 1}
+                  dwellTime={dwellTime}
+                />
+              </div>
+            )}
+          </>
         ) : (
           <div className="text-center text-slate-500 py-12">
             <p className="text-xl mb-2">No fragments in this category</p>
@@ -480,6 +591,54 @@ const ActionButton: React.FC<ActionButtonProps> = ({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
+      disabled={disabled}
+    >
+      <span className="relative z-10">{label}</span>
+
+      {/* Dwell progress indicator */}
+      {progress > 0 && !disabled && (
+        <div
+          className="absolute inset-0 rounded-lg border-4 border-yellow-400"
+          style={{
+            background: `conic-gradient(#facc15 ${progress}%, transparent ${progress}%)`,
+            opacity: 0.3,
+          }}
+        />
+      )}
+    </button>
+  );
+};
+
+// Pagination button component
+interface PaginationButtonProps {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  dwellTime: number;
+}
+
+const PaginationButton: React.FC<PaginationButtonProps> = ({
+  label,
+  onClick,
+  disabled = false,
+  dwellTime,
+}) => {
+  const { progress, handleMouseEnter, handleMouseLeave } = useDwellDetection(
+    dwellTime,
+    onClick,
+    !disabled
+  );
+
+  return (
+    <button
+      className={`
+        relative bg-slate-700 text-white rounded-lg px-6 py-3
+        font-medium text-lg min-h-[56px] min-w-[120px] transition-all
+        ${disabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-slate-600'}
+      `}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onClick={() => !disabled && onClick()}
       disabled={disabled}
     >
       <span className="relative z-10">{label}</span>

@@ -137,22 +137,18 @@ function App() {
     <div className="h-screen bg-slate-900 flex flex-col overflow-hidden">
       {/* Header - Smaller overall, hidden completely on phrase pages */}
       {!(activeTab === 'quick' && isViewingPhrases) && (
-        <header className="flex items-center justify-center px-6 py-3 border-b border-slate-700/50 bg-slate-900/95">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-white tracking-tight">HelloFriend</h1>
-            <p className="text-sm text-slate-400 mt-0.5 font-light">Look. Dwell. Communicate.</p>
-          </div>
+        <header className="flex items-center justify-center px-6 py-4 border-b border-slate-700/50 bg-slate-900/95">
+          <h1 className="text-4xl font-bold text-white tracking-tight">HelloFriend</h1>
         </header>
       )}
 
-      {/* Main Content Area - Full Width Tabbed */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Section: Tabbed Content - Full Width */}
+      {/* Main Content Area - 10% margins on left/right */}
+      <div className="flex-1 flex flex-col overflow-hidden px-[10%]">
+        {/* Tabbed Section */}
         <div className="flex-1 flex flex-col overflow-hidden min-h-0">
-          {/* Tabbed Section - Full Width */}
           <div className="flex flex-col max-h-full flex-1">
-            {/* Tab Buttons */}
-            <div className="flex border-b border-slate-700/50 flex-shrink-0">
+            {/* Tab Buttons - Same 80% width container */}
+            <div className="flex border-b border-slate-700/50 flex-shrink-0 rounded-t-lg overflow-hidden">
               <button
                 onMouseEnter={typeTab.handleMouseEnter}
                 onMouseLeave={typeTab.handleMouseLeave}
@@ -256,44 +252,46 @@ function App() {
 
             {/* Tab Content */}
             <div className="flex-1 overflow-hidden">
-              {activeTab === 'type' && (
-                <div className="p-8 flex flex-col gap-8 h-full overflow-y-auto">
-                  {/* AI Predictions */}
-                  {(predictions.length > 0 || isPredictionsLoading) && (
-                    <ThoughtCompletionBar
-                      predictions={predictions}
-                      onSelectPrediction={handlePredictionSelect}
-                      isLoading={isPredictionsLoading}
-                    />
-                  )}
+              <div className="h-full">
+                {activeTab === 'type' && (
+                  <div className="py-8 flex flex-col gap-8 h-full overflow-y-auto">
+                    {/* AI Predictions */}
+                    {(predictions.length > 0 || isPredictionsLoading) && (
+                      <ThoughtCompletionBar
+                        predictions={predictions}
+                        onSelectPrediction={handlePredictionSelect}
+                        isLoading={isPredictionsLoading}
+                      />
+                    )}
 
-                  {/* Message Display */}
-                  <div className="flex-1 flex flex-col items-center justify-center gap-4">
-                    <div className="w-full max-w-4xl">
-                      <MessageDisplay />
+                    {/* Message Display */}
+                    <div className="flex-1 flex flex-col items-center justify-center gap-4">
+                      <div className="w-full">
+                        <MessageDisplay />
+                      </div>
+                      <p className="text-slate-500 text-sm">Use your Tobii system keyboard to type</p>
                     </div>
-                    <p className="text-slate-500 text-sm">Use your Tobii system keyboard to type</p>
                   </div>
-                </div>
-              )}
+                )}
 
-              {activeTab === 'build' && (
-                <div className="h-full">
-                  <PhraseBuilder />
-                </div>
-              )}
+                {activeTab === 'build' && (
+                  <div className="h-full py-4">
+                    <PhraseBuilder />
+                  </div>
+                )}
 
-              {activeTab === 'quick' && (
-                <div className="px-6 py-3 h-full overflow-y-auto">
-                  <StartersPanel onCategoryChange={(hasCategory) => setIsViewingPhrases(hasCategory)} />
-                </div>
-              )}
+                {activeTab === 'quick' && (
+                  <div className="py-4 h-full overflow-y-auto">
+                    <StartersPanel onCategoryChange={(hasCategory) => setIsViewingPhrases(hasCategory)} />
+                  </div>
+                )}
 
-              {activeTab === 'ask' && (
-                <div className="h-full">
-                  <SimpleStoryMode />
-                </div>
-              )}
+                {activeTab === 'ask' && (
+                  <div className="h-full py-4">
+                    <SimpleStoryMode />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

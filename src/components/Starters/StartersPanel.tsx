@@ -48,8 +48,8 @@ export const StartersPanel = ({ className = '', onCategoryChange }: StartersPane
   const { speak } = useTextToSpeech();
   const { getPhrasesByCategory, trackUsage } = usePhraseLibrary();
 
-  // Pagination
-  const ITEMS_PER_PAGE = 30;
+  // Pagination - 12 items for accessibility (4 columns x 3 rows)
+  const ITEMS_PER_PAGE = 12;
   const totalPages = Math.ceil(phrases.length / ITEMS_PER_PAGE);
   const startIndex = currentPage * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
@@ -94,11 +94,11 @@ export const StartersPanel = ({ className = '', onCategoryChange }: StartersPane
     trackUsage(phrase.id, 'starter');
   };
 
-  // Level 1: Category Selection
+  // Level 1: Category Selection - 5 columns for center-focused layout
   if (!selectedCategory) {
     return (
-      <div className={`h-full overflow-y-auto p-6 ${className}`}>
-        <div className="grid grid-cols-3 gap-4">
+      <div className={`h-full flex flex-col justify-center ${className}`}>
+        <div className="grid grid-cols-5 gap-4">
           {CATEGORIES.map(category => (
             <CategoryButton
               key={category.id}
@@ -131,8 +131,8 @@ export const StartersPanel = ({ className = '', onCategoryChange }: StartersPane
         </div>
       </div>
 
-      {/* Phrases Grid */}
-      <div className="flex-1 overflow-y-auto px-6 py-3">
+      {/* Phrases Grid - 4 columns for accessibility */}
+      <div className="flex-1 py-3">
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
             <p className="text-slate-400 text-lg">Loading phrases...</p>
@@ -142,7 +142,7 @@ export const StartersPanel = ({ className = '', onCategoryChange }: StartersPane
             <p className="text-slate-400 text-lg">No phrases available</p>
           </div>
         ) : (
-          <div className="grid grid-cols-6 gap-2">
+          <div className="grid grid-cols-4 gap-3">
             {currentPhrases.map(phrase => (
               <PhraseButton
                 key={phrase.id}
@@ -158,18 +158,18 @@ export const StartersPanel = ({ className = '', onCategoryChange }: StartersPane
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
-        <div className="flex-shrink-0 px-6 py-3 border-t border-slate-700/50 bg-slate-800/50 flex items-center justify-center gap-4">
+        <div className="flex-shrink-0 py-4 border-t border-slate-700 flex items-center justify-center gap-4">
           <PaginationButton
-            label="Previous"
+            label="◀ Prev"
             onClick={handlePreviousPage}
             disabled={currentPage === 0}
             dwellTime={dwellTime}
           />
-          <span className="text-slate-300 text-sm font-medium">
-            Page {currentPage + 1} of {totalPages} ({phrases.length} phrases)
+          <span className="text-slate-400 text-lg font-medium min-w-[140px] text-center">
+            Page {currentPage + 1} of {totalPages}
           </span>
           <PaginationButton
-            label="Next"
+            label="Next ▶"
             onClick={handleNextPage}
             disabled={currentPage === totalPages - 1}
             dwellTime={dwellTime}
@@ -329,10 +329,10 @@ const PaginationButton = ({ label, onClick, disabled, dwellTime }: PaginationBut
 
   return (
     <button
-      className={`relative px-6 py-3 rounded-lg font-medium transition-all ${
+      className={`relative px-6 py-3 rounded-lg font-medium text-lg min-h-[56px] min-w-[120px] transition-all ${
         disabled
-          ? 'bg-slate-700/50 text-slate-500 cursor-not-allowed'
-          : 'bg-blue-600 hover:bg-blue-500 text-white cursor-pointer'
+          ? 'bg-slate-700 text-slate-500 opacity-40 cursor-not-allowed'
+          : 'bg-slate-700 hover:bg-slate-600 text-white cursor-pointer'
       }`}
       onMouseEnter={disabled ? undefined : handleMouseEnter}
       onMouseLeave={disabled ? undefined : handleMouseLeave}
