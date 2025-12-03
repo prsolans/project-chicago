@@ -64,7 +64,7 @@ export async function textToSpeech(options: TTSOptions): Promise<Blob> {
       },
       body: JSON.stringify({
         text,
-        model_id: 'eleven_monolingual_v1',
+        model_id: 'eleven_v3',
         voice_settings: voiceSettings,
       }),
     });
