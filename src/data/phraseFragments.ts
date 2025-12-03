@@ -323,22 +323,27 @@ export const connectorFragments: PhraseFragment[] = [
 
 /**
  * EMOTION TAGS - TTS voice modifiers for expressive speech
- * These tags modify how text-to-speech reads the content
+ * These tags modify how text-to-speech reads the content (ElevenLabs v3)
  */
 export const emotionTagFragments: PhraseFragment[] = [
   // Emotion tags - affect voice quality and tone
-  { id: 'tag_excited', text: '[excited]', type: 'emotionTag', category: 'tts_emotion', commonality: 'common' },
-  { id: 'tag_sad', text: '[sad]', type: 'emotionTag', category: 'tts_emotion', commonality: 'common' },
+  { id: 'tag_excited', text: '[excited]', type: 'emotionTag', category: 'tts_emotion', commonality: 'very_common' },
+  { id: 'tag_sad', text: '[sad]', type: 'emotionTag', category: 'tts_emotion', commonality: 'very_common' },
+  { id: 'tag_happy', text: '[happy]', type: 'emotionTag', category: 'tts_emotion', commonality: 'very_common' },
   { id: 'tag_angry', text: '[angry]', type: 'emotionTag', category: 'tts_emotion', commonality: 'common' },
   { id: 'tag_scared', text: '[scared]', type: 'emotionTag', category: 'tts_emotion', commonality: 'common' },
-  { id: 'tag_happy', text: '[happy]', type: 'emotionTag', category: 'tts_emotion', commonality: 'common' },
   { id: 'tag_serious', text: '[serious]', type: 'emotionTag', category: 'tts_emotion', commonality: 'common' },
+  { id: 'tag_curious', text: '[curious]', type: 'emotionTag', category: 'tts_emotion', commonality: 'common' },
+  { id: 'tag_sarcastic', text: '[sarcastic]', type: 'emotionTag', category: 'tts_emotion', commonality: 'common' },
+  { id: 'tag_crying', text: '[crying]', type: 'emotionTag', category: 'tts_emotion', commonality: 'uncommon' },
 
   // Effect tags - add sounds or vocal characteristics
-  { id: 'tag_laughs', text: '[laughs]', type: 'emotionTag', category: 'tts_effect', commonality: 'common' },
-  { id: 'tag_sighs', text: '[sighs]', type: 'emotionTag', category: 'tts_effect', commonality: 'common' },
-  { id: 'tag_whispers', text: '[whispers]', type: 'emotionTag', category: 'tts_effect', commonality: 'uncommon' },
+  { id: 'tag_laughs', text: '[laughs]', type: 'emotionTag', category: 'tts_effect', commonality: 'very_common' },
+  { id: 'tag_sighs', text: '[sighs]', type: 'emotionTag', category: 'tts_effect', commonality: 'very_common' },
+  { id: 'tag_whispers', text: '[whispers]', type: 'emotionTag', category: 'tts_effect', commonality: 'common' },
+  { id: 'tag_gasps', text: '[gasps]', type: 'emotionTag', category: 'tts_effect', commonality: 'common' },
   { id: 'tag_shouts', text: '[shouts]', type: 'emotionTag', category: 'tts_effect', commonality: 'uncommon' },
+  { id: 'tag_gulps', text: '[gulps]', type: 'emotionTag', category: 'tts_effect', commonality: 'uncommon' },
 
   // Pacing tags - affect speech speed
   { id: 'tag_fast', text: '[fast]', type: 'emotionTag', category: 'tts_pacing', commonality: 'common' },

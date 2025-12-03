@@ -283,26 +283,27 @@ export const PhraseBuilder: React.FC = () => {
   }, [currentSelection.previewText, enableAI, triggerPredictions, clearPredictions]);
 
   const handleSelectFragment = (fragment: PhraseFragment) => {
-    // Check if there's AI-appended text that would be lost
+    // Check if there's AI-appended text in the preview
     const currentPreview = currentSelection.previewText;
     const fragmentsText = currentSelection.fragments.map(f => f.text).join(' ');
     const hasExtraText = currentPreview.length > fragmentsText.length + 1; // +1 for capitalization
 
-    // Add the fragment to the store
-    addFragment(fragment);
-
-    // If there was extra text (from AI), preserve it by appending to the new fragment
     if (hasExtraText) {
-      // Get the extra text that was appended (AI suggestions)
-      const extraText = currentPreview.slice(fragmentsText.length).trim();
-      // Get the updated state after addFragment
+      // Append fragment to the END of preview (after AI text)
+      const newPreviewText = currentPreview + ' ' + fragment.text;
+
+      // Add fragment to array for tracking
+      addFragment(fragment);
+
+      // Override preview to put fragment at actual end (after AI text)
       const updatedSelection = usePhraseFragmentStore.getState().currentSelection;
-      // Combine: new fragments text + extra text + new fragment
-      const combinedText = updatedSelection.previewText + ' ' + extraText;
       setCurrentSelection({
         ...updatedSelection,
-        previewText: combinedText.charAt(0).toUpperCase() + combinedText.slice(1).trim(),
+        previewText: newPreviewText.charAt(0).toUpperCase() + newPreviewText.slice(1),
       });
+    } else {
+      // No extra text, just add fragment normally
+      addFragment(fragment);
     }
 
     // Auto-advance to suggested category after selection
@@ -375,8 +376,14 @@ export const PhraseBuilder: React.FC = () => {
     const currentText = currentSelection.previewText;
     if (!currentText) return;
 
-    // Replace trailing punctuation, or add punctuation
-    const newText = currentText.replace(/[.!?]$/, '') + punctuation;
+    let newText: string;
+    if (punctuation === ',') {
+      // Comma: just append (allows multiple commas for lists)
+      newText = currentText.replace(/,$/, '') + punctuation;
+    } else {
+      // ! or ?: Replace any trailing punctuation
+      newText = currentText.replace(/[.!?,]$/, '') + punctuation;
+    }
 
     setCurrentSelection({
       ...currentSelection,
@@ -492,6 +499,12 @@ export const PhraseBuilder: React.FC = () => {
         ))}
 
         {/* Punctuation buttons for expression */}
+        <PunctuationButton
+          punctuation=","
+          color="bg-slate-500"
+          onSelect={() => handlePunctuation(',')}
+          dwellTime={dwellTime}
+        />
         <PunctuationButton
           punctuation="!"
           color="bg-amber-600"

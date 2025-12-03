@@ -327,6 +327,16 @@ function App() {
             <div className="inline-block bg-blue-600 text-white text-2xl font-semibold px-8 py-4 rounded-xl">
               Tap to Begin
             </div>
+
+            {/* What's New Section */}
+            <div className="mt-10 pt-8 border-t border-slate-700">
+              <h3 className="text-lg font-semibold text-slate-400 mb-3">What's New</h3>
+              <ul className="text-slate-400 text-base text-left space-y-2">
+                <li>• Expressive voice with [laughs], [whispers], [excited] tags</li>
+                <li>• Improved Build mode with categories and suggestions</li>
+                <li>• Better accessibility layout and punctuation buttons</li>
+              </ul>
+            </div>
           </div>
         </div>
       )}
