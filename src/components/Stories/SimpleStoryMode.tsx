@@ -3,14 +3,13 @@
  * Create and play back stories without complex parsing
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useStoryStore } from '../../store/simpleStoryStore';
 import { useTextToSpeech } from '../../hooks/useTextToSpeech';
 import { useDwellDetection } from '../../hooks/useDwellDetection';
 import { useSettingsStore } from '../../store/settingsStore';
-import { parseEmotionTags, getTagSuggestions, EMOTION_TAGS } from '../../utils/emotionTags';
+import { parseEmotionTags } from '../../utils/emotionTags';
 import type { Story } from '../../types/database';
-import type { EmotionTag } from '../../utils/emotionTags';
 import {
   Plus,
   Play,
@@ -21,7 +20,10 @@ import {
   SkipForward,
   Volume2,
   Save,
+  X,
+  Blocks,
 } from 'lucide-react';
+import { LineBuilderModal } from './LineBuilderModal';
 
 type ViewMode = 'list' | 'editor' | 'playback';
 
@@ -93,19 +95,23 @@ interface StoryListProps {
   onCreate: () => void;
 }
 
+const FILTER_CATEGORIES = [
+  { value: '', label: 'All' },
+  { value: 'memory', label: 'Memory' },
+  { value: 'joke', label: 'Joke' },
+  { value: 'teaching', label: 'Teaching' },
+  { value: 'observation', label: 'Observation' },
+  { value: 'personal', label: 'Personal' },
+];
+
 const StoryList = ({ onPlay, onEdit, onCreate }: StoryListProps) => {
   const { stories, removeStory } = useStoryStore();
   const { dwellTime } = useSettingsStore();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
 
   const filteredStories = stories.filter(story => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      story.title.toLowerCase().includes(q) ||
-      story.description?.toLowerCase().includes(q) ||
-      story.content.toLowerCase().includes(q)
-    );
+    if (!categoryFilter) return true;
+    return story.category === categoryFilter;
   });
 
   const sortedStories = [...filteredStories].sort((a, b) => {
@@ -131,13 +137,18 @@ const StoryList = ({ onPlay, onEdit, onCreate }: StoryListProps) => {
             color="bg-green-600 hover:bg-green-500"
           />
         </div>
-        <input
-          type="text"
-          placeholder="Search stories..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full px-4 py-3 rounded-lg bg-slate-700 text-white placeholder-slate-400 border border-slate-600"
-        />
+        {/* Category Filter Buttons */}
+        <div className="flex flex-wrap gap-2">
+          {FILTER_CATEGORIES.map(cat => (
+            <CategoryButton
+              key={cat.value}
+              label={cat.label}
+              isSelected={categoryFilter === cat.value}
+              onSelect={() => setCategoryFilter(cat.value)}
+              dwellTime={dwellTime}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Stories */}
@@ -205,13 +216,23 @@ const StoryCard = ({ story, onPlay, onEdit, onDelete, dwellTime }: StoryCardProp
 };
 
 /**
- * Story Editor
+ * Story Editor - Line List Version
+ * Build stories line by line using fragment builder
  */
 interface StoryEditorProps {
   storyId: string | null;
   onBack: () => void;
   onPlay: (id: string) => void;
 }
+
+const STORY_CATEGORIES = [
+  { value: '', label: 'None' },
+  { value: 'memory', label: 'Memory' },
+  { value: 'joke', label: 'Joke' },
+  { value: 'teaching', label: 'Teaching' },
+  { value: 'observation', label: 'Observation' },
+  { value: 'personal', label: 'Personal' },
+];
 
 const StoryEditor = ({ storyId, onBack, onPlay }: StoryEditorProps) => {
   const { getStoryById, createNewStory, updateExistingStory } = useStoryStore();
@@ -220,110 +241,28 @@ const StoryEditor = ({ storyId, onBack, onPlay }: StoryEditorProps) => {
   const story = storyId ? getStoryById(storyId) : null;
 
   const [title, setTitle] = useState(story?.title || '');
-  const [content, setContent] = useState(story?.content || '');
+  const [lines, setLines] = useState<string[]>(() => {
+    if (story?.content) {
+      return story.content.split('\n').filter(l => l.trim());
+    }
+    return [];
+  });
   const [description, setDescription] = useState(story?.description || '');
   const [category, setCategory] = useState(story?.category || '');
   const [error, setError] = useState('');
+  const [showLineBuilder, setShowLineBuilder] = useState(false);
+  const [showTitleBuilder, setShowTitleBuilder] = useState(false);
 
-  // Autocomplete state
-  const [showAutocomplete, setShowAutocomplete] = useState(false);
-  const [autocompletePosition, setAutocompletePosition] = useState({ top: 0, left: 0 });
-  const [suggestions, setSuggestions] = useState<EmotionTag[]>([]);
-  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(0);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newContent = e.target.value;
-    setContent(newContent);
-
-    // Check if we should show autocomplete
-    const cursorPos = e.target.selectionStart;
-    const textBeforeCursor = newContent.slice(0, cursorPos);
-
-    // Find the last '[' before cursor
-    const lastBracketIndex = textBeforeCursor.lastIndexOf('[');
-
-    if (lastBracketIndex !== -1) {
-      // Check if there's a closing bracket after the opening one
-      const textAfterBracket = textBeforeCursor.slice(lastBracketIndex + 1);
-      const hasClosingBracket = textAfterBracket.includes(']');
-
-      if (!hasClosingBracket) {
-        // We're inside a tag, show autocomplete
-        const partial = textAfterBracket;
-        const filteredSuggestions = partial.length > 0
-          ? getTagSuggestions(partial)
-          : EMOTION_TAGS;
-
-        if (filteredSuggestions.length > 0) {
-          setSuggestions(filteredSuggestions);
-          setSelectedSuggestionIndex(0);
-          setShowAutocomplete(true);
-
-          // Calculate position for autocomplete dropdown
-          if (textareaRef.current) {
-            const textarea = textareaRef.current;
-            const rect = textarea.getBoundingClientRect();
-            setAutocompletePosition({
-              top: rect.top + 40,
-              left: rect.left + 20,
-            });
-          }
-        } else {
-          setShowAutocomplete(false);
-        }
-      } else {
-        setShowAutocomplete(false);
-      }
-    } else {
-      setShowAutocomplete(false);
-    }
+  const handleAddLine = (line: string) => {
+    setLines(prev => [...prev, line]);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (!showAutocomplete) return;
-
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedSuggestionIndex(prev =>
-        prev < suggestions.length - 1 ? prev + 1 : prev
-      );
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedSuggestionIndex(prev => prev > 0 ? prev - 1 : prev);
-    } else if (e.key === 'Enter' || e.key === 'Tab') {
-      e.preventDefault();
-      insertTag(suggestions[selectedSuggestionIndex]);
-    } else if (e.key === 'Escape') {
-      setShowAutocomplete(false);
-    }
+  const handleSetTitle = (newTitle: string) => {
+    setTitle(newTitle);
   };
 
-  const insertTag = (tag: EmotionTag) => {
-    if (!textareaRef.current) return;
-
-    const textarea = textareaRef.current;
-    const cursorPos = textarea.selectionStart;
-    const textBeforeCursor = content.slice(0, cursorPos);
-    const textAfterCursor = content.slice(cursorPos);
-
-    // Find the last '[' before cursor
-    const lastBracketIndex = textBeforeCursor.lastIndexOf('[');
-
-    if (lastBracketIndex !== -1) {
-      const beforeBracket = content.slice(0, lastBracketIndex);
-      const newContent = beforeBracket + tag.label + '] ' + textAfterCursor;
-      setContent(newContent);
-
-      // Move cursor after the inserted tag
-      setTimeout(() => {
-        const newCursorPos = lastBracketIndex + tag.label.length + 2;
-        textarea.setSelectionRange(newCursorPos, newCursorPos);
-        textarea.focus();
-      }, 0);
-    }
-
-    setShowAutocomplete(false);
+  const handleDeleteLine = (index: number) => {
+    setLines(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSave = async () => {
@@ -331,10 +270,12 @@ const StoryEditor = ({ storyId, onBack, onPlay }: StoryEditorProps) => {
       setError('Title is required');
       return;
     }
-    if (!content.trim()) {
-      setError('Story content is required');
+    if (lines.length === 0) {
+      setError('Add at least one line to your story');
       return;
     }
+
+    const content = lines.join('\n');
 
     try {
       if (storyId) {
@@ -365,87 +306,77 @@ const StoryEditor = ({ storyId, onBack, onPlay }: StoryEditorProps) => {
             </div>
           )}
 
+          {/* Title - Build with fragments */}
           <div>
             <label className="block text-slate-300 font-medium mb-2">Title *</label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="My Story"
-              className="w-full px-4 py-3 rounded-lg bg-slate-700 text-white border border-slate-600"
-            />
+            <div className="flex items-center gap-4">
+              <div className="flex-1 px-4 py-3 rounded-lg bg-slate-800 text-white border border-slate-600 min-h-[52px] flex items-center">
+                {title || <span className="text-slate-500 italic">No title yet</span>}
+              </div>
+              <DwellButton
+                icon={Blocks}
+                label="Build Title"
+                onClick={() => setShowTitleBuilder(true)}
+                dwellTime={dwellTime}
+                color="bg-purple-600 hover:bg-purple-500"
+              />
+            </div>
           </div>
 
-          <div>
-            <label className="block text-slate-300 font-medium mb-2">Description</label>
-            <input
-              type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="A brief description"
-              className="w-full px-4 py-3 rounded-lg bg-slate-700 text-white border border-slate-600"
-            />
-          </div>
-
+          {/* Category - Dwell Buttons */}
           <div>
             <label className="block text-slate-300 font-medium mb-2">Category</label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg bg-slate-700 text-white border border-slate-600"
-            >
-              <option value="">Select category</option>
-              <option value="memory">Memory</option>
-              <option value="joke">Joke</option>
-              <option value="teaching">Teaching</option>
-              <option value="observation">Observation</option>
-              <option value="personal">Personal</option>
-            </select>
+            <div className="flex flex-wrap gap-2">
+              {STORY_CATEGORIES.map(cat => (
+                <CategoryButton
+                  key={cat.value}
+                  label={cat.label}
+                  isSelected={category === cat.value}
+                  onSelect={() => setCategory(cat.value)}
+                  dwellTime={dwellTime}
+                />
+              ))}
+            </div>
           </div>
 
-          <div className="relative">
-            <label className="block text-slate-300 font-medium mb-2">Story *</label>
-            <p className="text-sm text-slate-400 mb-2">
-              Type your story. Press Enter to create line breaks for pausing during playback.
-              <br />
-              <span className="text-blue-400">Tip: Type [ to add emotion tags like [excited], [laughs], [fast], etc.</span>
+          {/* Story Lines */}
+          <div>
+            <label className="block text-slate-300 font-medium mb-2">Story Lines *</label>
+            <p className="text-sm text-slate-400 mb-4">
+              Build your story one line at a time. Each line will be spoken separately during playback.
             </p>
-            <textarea
-              ref={textareaRef}
-              value={content}
-              onChange={handleContentChange}
-              onKeyDown={handleKeyDown}
-              placeholder="Type your story here..."
-              rows={15}
-              className="w-full px-4 py-3 rounded-lg bg-slate-700 text-white border border-slate-600 font-mono resize-none"
-            />
 
-            {/* Autocomplete Dropdown */}
-            {showAutocomplete && (
-              <div
-                className="fixed z-50 bg-slate-800 border-2 border-blue-500 rounded-lg shadow-xl max-h-64 overflow-y-auto"
-                style={{
-                  top: `${autocompletePosition.top}px`,
-                  left: `${autocompletePosition.left}px`,
-                  minWidth: '300px',
-                }}
-              >
-                {suggestions.map((suggestion, idx) => (
-                  <button
-                    key={suggestion.tag}
-                    onClick={() => insertTag(suggestion)}
-                    className={`w-full px-4 py-3 text-left hover:bg-slate-700 transition-colors ${
-                      idx === selectedSuggestionIndex ? 'bg-blue-600 text-white' : 'text-slate-300'
-                    }`}
+            {/* Line List */}
+            <div className="space-y-2 mb-4">
+              {lines.length === 0 ? (
+                <div className="bg-slate-800 rounded-lg p-6 text-center text-slate-500">
+                  No lines yet. Click "Build a Line" to start your story.
+                </div>
+              ) : (
+                lines.map((line, index) => (
+                  <div
+                    key={index}
+                    className="bg-slate-800 rounded-lg p-4 flex items-center gap-4 border border-slate-700"
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="font-mono text-sm font-bold">{suggestion.label}</span>
-                      <span className="text-xs opacity-75">- {suggestion.description}</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
+                    <span className="text-slate-500 font-mono text-sm w-8">{index + 1}.</span>
+                    <span className="flex-1 text-white">{line}</span>
+                    <DeleteLineButton
+                      onClick={() => handleDeleteLine(index)}
+                      dwellTime={dwellTime}
+                    />
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Build a Line Button */}
+            <DwellButton
+              icon={Blocks}
+              label="+ Build a Line"
+              onClick={() => setShowLineBuilder(true)}
+              dwellTime={dwellTime}
+              color="bg-blue-600 hover:bg-blue-500"
+            />
           </div>
 
           <DwellButton
@@ -457,7 +388,95 @@ const StoryEditor = ({ storyId, onBack, onPlay }: StoryEditorProps) => {
           />
         </div>
       </div>
+
+      {/* Line Builder Modal */}
+      {showLineBuilder && (
+        <LineBuilderModal
+          onAddLine={handleAddLine}
+          onClose={() => setShowLineBuilder(false)}
+          mode="line"
+        />
+      )}
+
+      {/* Title Builder Modal */}
+      {showTitleBuilder && (
+        <LineBuilderModal
+          onAddLine={handleSetTitle}
+          onClose={() => setShowTitleBuilder(false)}
+          mode="title"
+        />
+      )}
     </div>
+  );
+};
+
+/**
+ * Delete Line Button with Dwell
+ */
+interface DeleteLineButtonProps {
+  onClick: () => void;
+  dwellTime: number;
+}
+
+const DeleteLineButton = ({ onClick, dwellTime }: DeleteLineButtonProps) => {
+  const { progress, handleMouseEnter, handleMouseLeave } = useDwellDetection(dwellTime, onClick);
+
+  return (
+    <button
+      className="relative p-2 rounded bg-red-600/20 text-red-400 hover:bg-red-600/40 transition-colors"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onClick={onClick}
+    >
+      {progress > 0 && (
+        <div
+          className="absolute inset-0 rounded border-2 border-yellow-400"
+          style={{
+            background: `conic-gradient(#facc15 ${progress}%, transparent ${progress}%)`,
+            opacity: 0.3,
+          }}
+        />
+      )}
+      <X className="w-5 h-5 relative z-10" />
+    </button>
+  );
+};
+
+/**
+ * Category Button with Dwell Detection
+ */
+interface CategoryButtonProps {
+  label: string;
+  isSelected: boolean;
+  onSelect: () => void;
+  dwellTime: number;
+}
+
+const CategoryButton = ({ label, isSelected, onSelect, dwellTime }: CategoryButtonProps) => {
+  const { progress, handleMouseEnter, handleMouseLeave } = useDwellDetection(dwellTime, onSelect);
+
+  return (
+    <button
+      className={`relative px-5 py-3 rounded-lg text-base font-medium transition-all cursor-pointer ${
+        isSelected
+          ? 'bg-blue-600 text-white ring-2 ring-blue-400'
+          : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+      }`}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onClick={onSelect}
+    >
+      {progress > 0 && !isSelected && (
+        <div
+          className="absolute inset-0 rounded-lg border-4 border-yellow-400 pointer-events-none"
+          style={{
+            background: `conic-gradient(#facc15 ${progress}%, transparent ${progress}%)`,
+            opacity: 0.3,
+          }}
+        />
+      )}
+      <span className="relative z-10">{label}</span>
+    </button>
   );
 };
 
